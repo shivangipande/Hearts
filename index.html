@@ -45,11 +45,13 @@
             flex-wrap: wrap;
             gap: 20px;
             backdrop-filter: blur(10px);
+            position: relative;
+            overflow: visible;
         }
         
         .controls {
             display: flex;
-            align-items: center;
+            align-items: baseline;
             gap: 12px;
             flex-wrap: wrap;
         }
@@ -72,8 +74,86 @@
         }
         
         .controls select {
-            padding-right: 35px;
+            padding: 10px 35px 10px 12px;
             min-width: 120px;
+            position: relative;
+            z-index: 10;
+            margin: 0;
+            outline: none;
+            display: inline-block;
+            vertical-align: baseline;
+        }
+        
+        .custom-select {
+            position: relative;
+            display: inline-block;
+            min-width: 120px;
+            z-index: 100000;
+        }
+        
+        .select-trigger {
+            padding: 10px 35px 10px 12px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: 'Ginto', Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 40px;
+            box-sizing: border-box;
+        }
+        
+        .select-trigger:hover {
+            background: var(--accent-color);
+        }
+        
+        .arrow {
+            font-size: 10px;
+            transition: transform 0.2s;
+            opacity: 0.7;
+        }
+        
+        .custom-select.open .arrow {
+            transform: rotate(180deg);
+        }
+        
+        .select-options {
+            position: fixed;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-top: 2px;
+            display: none;
+            z-index: 999999;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            min-width: 120px;
+        }
+        
+        .custom-select.open .select-options {
+            display: block;
+        }
+        
+        .option {
+            padding: 10px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        
+        .option:hover {
+            background: var(--accent-color);
+        }
+        
+        .option:first-child {
+            border-radius: 6px 6px 0 0;
+        }
+        
+        .option:last-child {
+            border-radius: 0 0 6px 6px;
         }
         
         .controls button {
@@ -105,6 +185,7 @@
         #canvas-container {
             margin-top: 0;
             position: relative;
+            z-index: 1;
         }
         
         .tooltip {
@@ -278,18 +359,22 @@
                 align-items: stretch;
                 padding: 15px;
                 gap: 15px;
+                overflow-x: hidden; /* Prevent header overflow */
             }
             
             .controls {
                 display: flex;
-                flex-direction: column;
-                gap: 12px;
-                align-items: stretch;
+                gap: 8px;
+                align-items: center;
+                flex-wrap: nowrap; /* Force single line - make search shrink instead */
+                overflow-x: hidden; /* Prevent controls overflow */
+                max-width: 100%; /* Ensure it fits in viewport */
             }
             
-            /* Search bar - full width row */
+            /* Just reduce search minimum width - keep everything else normal */
             .search-row {
-                width: 100%;
+                flex: 1;
+                min-width: 120px;
             }
             
             .search-row input {
@@ -301,20 +386,19 @@
                 box-sizing: border-box;
             }
             
-            /* Buttons row */
             .buttons-row {
                 display: flex;
-                gap: 8px;
-                justify-content: space-between;
-                align-items: center;
+                gap: 6px;
+                flex-shrink: 0;
             }
             
-            .buttons-row select {
-                flex: 1;
-                font-size: 14px;
-                padding: 10px 30px 10px 12px;
-                border-radius: 6px;
-                min-width: 0;
+            /* Hide sort dropdown and clean view button on mobile */
+            #sortSelect {
+                display: none !important;
+            }
+            
+            #cleanViewBtn {
+                display: none !important;
             }
             
             .buttons-row button {
@@ -396,24 +480,29 @@
                 gap: 12px;
             }
             
-            .search-row input {
-                font-size: 16px;
-                padding: 12px 14px;
-            }
-            
-            .buttons-row {
+            .controls {
                 gap: 6px;
             }
             
-            .buttons-row select {
-                font-size: 13px;
-                padding: 9px 25px 9px 10px;
+            .search-row {
+                min-width: 120px; /* Even smaller on tiny screens */
+                max-width: 65%; /* More room for buttons */
+            }
+            
+            .search-row input {
+                font-size: 16px;
+                padding: 10px 12px;
+            }
+            
+            .buttons-row {
+                gap: 4px;
             }
             
             .buttons-row button {
-                padding: 9px;
-                min-width: 42px;
-                min-height: 42px;
+                padding: 8px;
+                min-width: 40px;
+                min-height: 40px;
+                font-size: 12px;
             }
             
             .info {
@@ -430,19 +519,21 @@
 <body data-theme="dark">
     <div class="header">
         <div class="controls">
-            <div class="search-row">
-                <input type="text" id="searchInput" placeholder="Search animals..." />
+            <input type="text" id="searchInput" placeholder="Search animals..." />
+            <div class="custom-select" id="sortSelect">
+                <div class="select-trigger">
+                    <span>🔤 Name</span>
+                    <span class="arrow">▾</span>
+                </div>
+                <div class="select-options">
+                    <div class="option" data-value="alphabetical">🔤 Name</div>
+                    <div class="option" data-value="heartrate">💓 BPM</div>
+                    <div class="option" data-value="size">📏 Size</div>
+                </div>
             </div>
-            <div class="buttons-row">
-                <select id="sortSelect" title="Sort by">
-                    <option value="alphabetical">🔤 Name</option>
-                    <option value="heartrate">💓 BPM</option>
-                    <option value="size">📏 Size</option>
-                </select>
-                <button id="cleanViewBtn" class="toggle-btn" onclick="toggleCleanView()" title="Toggle clean view">🧹</button>
-                <button id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
-                <button onclick="showExportModal()" title="Export options">📤</button>
-            </div>
+            <button id="cleanViewBtn" class="toggle-btn" onclick="toggleCleanView()" title="Toggle clean view">🧹</button>
+            <button id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+            <button onclick="showExportModal()" title="Export options">📤</button>
         </div>
         
         <div class="info">
@@ -1181,9 +1272,77 @@
         }
         
         function handleSort() {
-            currentSort = document.getElementById('sortSelect').value;
+            // Handle both native select and custom select
+            let sortValue;
+            if (document.getElementById('sortSelect').classList) {
+                // Custom select - get from data attribute of selected option
+                const selectedOption = document.querySelector('.option.selected');
+                sortValue = selectedOption ? selectedOption.dataset.value : 'alphabetical';
+            } else {
+                // Native select fallback
+                sortValue = document.getElementById('sortSelect').value;
+            }
+            currentSort = sortValue;
             updateDisplay();
         }
+        
+        // Custom dropdown functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const customSelect = document.getElementById('sortSelect');
+            const trigger = customSelect.querySelector('.select-trigger');
+            const options = customSelect.querySelectorAll('.option');
+            
+            // Create dropdown in body to avoid clipping
+            const dropdown = customSelect.querySelector('.select-options');
+            document.body.appendChild(dropdown);
+            
+            // Toggle dropdown
+            trigger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                if (dropdown.style.display === 'block') {
+                    dropdown.style.display = 'none';
+                    customSelect.classList.remove('open');
+                } else {
+                    // Position dropdown correctly when opened
+                    const rect = trigger.getBoundingClientRect();
+                    dropdown.style.display = 'block';
+                    dropdown.style.top = (rect.bottom + window.scrollY + 2) + 'px';
+                    dropdown.style.left = (rect.left + window.scrollX) + 'px';
+                    dropdown.style.width = rect.width + 'px';
+                    customSelect.classList.add('open');
+                }
+            });
+            
+            // Handle option selection
+            options.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Update trigger text
+                    trigger.querySelector('span').textContent = this.textContent;
+                    
+                    // Mark as selected
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    
+                    // Close dropdown
+                    dropdown.style.display = 'none';
+                    customSelect.classList.remove('open');
+                    
+                    // Update sorting
+                    currentSort = this.dataset.value;
+                    updateDisplay();
+                });
+            });
+            
+            // Close on outside click
+            document.addEventListener('click', function() {
+                dropdown.style.display = 'none';
+                customSelect.classList.remove('open');
+            });
+            
+            // Set initial selection
+            options[0].classList.add('selected');
+        });
         
         function clearSearch() {
             document.getElementById('searchInput').value = '';
