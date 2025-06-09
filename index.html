@@ -265,55 +265,102 @@
         }
         
         @media (max-width: 768px) {
+            body {
+                overflow-x: hidden; /* Allow vertical scrolling */
+            }
+            
             .header {
                 flex-direction: column;
                 align-items: stretch;
-                padding: 10px;
+                padding: 15px 10px;
+                gap: 12px;
             }
             
+            /* First line: Search only - full width like heading */
             .controls {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+            
+            .search-row {
+                display: flex;
                 justify-content: center;
-                gap: 8px;
+                width: 100%;
+                margin-bottom: 3px;
+            }
+            
+            .buttons-row {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
                 flex-wrap: wrap;
+                margin-bottom: 3px;
             }
             
             .controls input {
-                width: 140px;
-                font-size: 14px;
+                width: 100%;
+                max-width: none; /* Remove max-width constraint */
+                font-size: 16px; /* Larger font like heading */
+                padding: 12px 15px;
+                border-radius: 8px;
+                text-align: center; /* Center text like heading */
             }
             
             .controls select {
                 font-size: 14px;
-                padding-right: 30px;
+                padding: 10px 30px 10px 10px;
+                flex: 1;
+                max-width: 140px;
+                border-radius: 6px;
             }
             
             .controls button {
-                padding: 10px;
-                font-size: 16px;
+                padding: 10px 12px;
+                font-size: 14px;
                 min-width: 44px;
                 min-height: 44px;
+                flex: 1;
+                border-radius: 6px;
             }
             
             .info {
                 text-align: center;
-                font-size: 11px;
-                padding: 8px 10px;
+                font-size: 12px;
+                padding: 12px 15px;
+                margin-top: 5px;
+                margin-bottom: 8px;
+                border-radius: 6px;
+            }
+            
+            .info strong {
+                font-size: 16px;
+                display: block;
+                margin-bottom: 4px;
             }
             
             .info small {
                 display: block;
-                margin-top: 2px;
+                margin-top: 3px;
+                font-size: 10px;
+                line-height: 1.3;
+            }
+            
+            #canvas-container {
+                min-height: auto; /* Allow natural height */
+                margin-top: 10px;
             }
             
             .intro-poem {
                 font-size: 18px;
-                padding: 0 15px;
+                padding: 0 20px;
                 line-height: 1.5;
-                margin-bottom: 25px;
+                margin-bottom: 30px;
             }
             
             .intro-arrow {
-                padding: 12px 20px;
+                padding: 14px 24px;
                 font-size: 16px;
             }
             
@@ -334,31 +381,32 @@
             }
             
             .export-content {
-                margin: 10px;
+                margin: 15px;
                 max-width: none;
-                width: calc(100% - 20px);
+                width: calc(100% - 30px);
                 padding: 20px;
             }
             
             .export-options {
                 flex-direction: column;
-                gap: 8px;
+                gap: 10px;
             }
             
             .export-options button {
                 min-width: auto;
                 width: 100%;
-                padding: 12px 16px;
+                padding: 14px 18px;
             }
             
             footer {
-                padding: 15px 10px !important;
+                padding: 20px 15px !important;
                 font-size: 11px !important;
+                margin-top: 25px !important;
             }
             
             footer p {
-                margin: 0 0 10px 0 !important;
-                line-height: 1.3 !important;
+                margin: 0 0 12px 0 !important;
+                line-height: 1.4 !important;
             }
         }
         
@@ -396,22 +444,26 @@
 <body data-theme="dark">
     <div class="header">
         <div class="controls">
-            <input type="text" id="searchInput" placeholder="Search animals..." />
-            <select id="sortSelect" title="Sort by">
-                <option value="alphabetical">🔤 Name</option>
-                <option value="heartrate">💓 BPM</option>
-                <option value="size">📏 Size</option>
-            </select>
-            <button id="cleanViewBtn" class="toggle-btn" onclick="toggleCleanView()" title="Toggle clean view">🧹</button>
-            <button id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
-            <button onclick="showExportModal()" title="Export options">📤</button>
+            <div class="search-row">
+                <input type="text" id="searchInput" placeholder="Search animals..." />
+            </div>
+            <div class="buttons-row">
+                <select id="sortSelect" title="Sort by">
+                    <option value="alphabetical">🔤 Name</option>
+                    <option value="heartrate">💓 BPM</option>
+                    <option value="size">📏 Size</option>
+                </select>
+                <button id="cleanViewBtn" class="toggle-btn" onclick="toggleCleanView()" title="Toggle clean view">🧹</button>
+                <button id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+                <button onclick="showExportModal()" title="Export options">📤</button>
+            </div>
         </div>
         
         <div class="info">
             <div>
                 <strong>Rhythms of Life</strong><br>
                 <small>An interactive map of animal heartbeats</small><br>
-                <small>Dot size = heart mass • Flicker rate = BPM • Hover for audio</small>
+                <small>Dot size = heart mass • Flicker rate = BPM • Touch for audio & haptics</small>
             </div>
         </div>
     </div>
@@ -463,7 +515,7 @@
         let cols = 8;
         let rows = 6;
         let canvasWidth = window.innerWidth;
-        let canvasHeight = window.innerHeight - 200; // Reserve space for header + footer
+        let canvasHeight = window.innerWidth < 768 ? window.innerHeight - 120 : window.innerHeight - 200; // Less space reserved on mobile
         let cleanView = false;
         let isDarkTheme = true;
         let hoveredAnimal = null;
@@ -693,18 +745,18 @@
             
             // Calculate responsive grid layout with optimized spacing
             let screenWidth = window.innerWidth;
-            let screenHeight = window.innerHeight - 200; // Account for header + footer
+            let screenHeight = window.innerWidth < 768 ? window.innerHeight - 120 : window.innerHeight - 200; // Less space on mobile
             
             let numAnimals = visibleAnimals.length;
             if (numAnimals === 0) return;
             
-            // Better column calculation for mobile-first approach
+            // Mobile-first grid - allow more rows and scrolling
             if (screenWidth < 400) {
-                cols = Math.min(2, numAnimals); // Only 2 columns on very small screens
+                cols = Math.min(2, numAnimals); // 2 columns on very small screens
             } else if (screenWidth < 600) {
                 cols = Math.min(3, numAnimals); // 3 columns on small phones
             } else if (screenWidth < 800) {
-                cols = Math.min(4, numAnimals); // 4 columns on larger phones/small tablets
+                cols = Math.min(4, numAnimals); // 4 columns on larger phones
             } else if (screenWidth < 1024) {
                 cols = Math.min(6, numAnimals);
             } else if (screenWidth < 1440) {
@@ -717,30 +769,39 @@
             cols = Math.min(cols, numAnimals);
             rows = Math.ceil(numAnimals / cols);
             
-            // Mobile-optimized margins and spacing
-            let marginX = screenWidth < 600 ? 10 : Math.max(20, screenWidth * 0.03);
-            let marginY = screenWidth < 600 ? 15 : Math.max(30, screenHeight * 0.05);
+            // Mobile gets generous spacing and allows scrolling
+            let marginX = screenWidth < 600 ? 15 : Math.max(20, screenWidth * 0.03);
+            let marginY = screenWidth < 600 ? 20 : Math.max(30, screenHeight * 0.05);
             let availableWidth = screenWidth - (marginX * 2);
-            let availableHeight = screenHeight - (marginY * 2);
             
-            // Calculate cell dimensions
+            // On mobile, calculate based on fixed cell size rather than screen height
             let cellWidth = availableWidth / cols;
-            let cellHeight = availableHeight / rows;
+            let cellHeight = screenWidth < 768 ? 120 : availableWidth / cols; // Fixed height on mobile
             
-            // Find the maximum heart size to ensure proper spacing
+            // Calculate total canvas height needed (allow scrolling on mobile)
+            let totalCanvasHeight = screenWidth < 768 ? 
+                (rows * cellHeight) + (marginY * 2) : 
+                screenHeight;
+            
+            // Resize canvas to fit all content on mobile
+            if (screenWidth < 768 && totalCanvasHeight > screenHeight) {
+                resizeCanvas(canvasWidth, totalCanvasHeight);
+            }
+            
+            // Find the maximum heart size
             let maxHeartSize = Math.max(...visibleAnimals.map(a => a.size));
             
-            // Mobile-optimized scaling
-            let maxContentHeight = cleanView ? maxHeartSize * 2 : maxHeartSize * 2 + (screenWidth < 600 ? 30 : 50);
-            let maxContentWidth = maxHeartSize * 2;
+            // Mobile-optimized scaling - more generous
+            let maxContentHeight = cleanView ? maxHeartSize * 1.5 : maxHeartSize * 1.5 + 40;
+            let maxContentWidth = maxHeartSize * 1.5;
             
-            // Scale factor based on available cell space with mobile considerations
-            let scaleFactorX = Math.min(1.0, (cellWidth - (screenWidth < 600 ? 15 : 30)) / maxContentWidth);
-            let scaleFactorY = Math.min(1.0, (cellHeight - (screenWidth < 600 ? 15 : 30)) / maxContentHeight);
+            // Scale factor - more generous on mobile
+            let scaleFactorX = Math.min(1.0, (cellWidth - 20) / maxContentWidth);
+            let scaleFactorY = Math.min(1.0, (cellHeight - 20) / maxContentHeight);
             let scaleFactor = Math.min(scaleFactorX, scaleFactorY);
             
-            // Minimum scale to keep hearts visible, more generous on mobile
-            scaleFactor = Math.max(screenWidth < 600 ? 0.3 : 0.2, Math.min(scaleFactor, 1.0));
+            // Better minimum scale on mobile
+            scaleFactor = Math.max(screenWidth < 600 ? 0.4 : 0.3, Math.min(scaleFactor, 1.0));
             
             // Position animals with optimized spacing
             for (let i = 0; i < visibleAnimals.length; i++) {
@@ -1138,7 +1199,7 @@
         
         function handleResize() {
             canvasWidth = window.innerWidth;
-            canvasHeight = window.innerHeight - 200; // Reserve space for header + footer
+            canvasHeight = window.innerWidth < 768 ? window.innerHeight - 120 : window.innerHeight - 200; // Less space reserved on mobile
             resizeCanvas(canvasWidth, canvasHeight);
             updateDisplay();
         }
