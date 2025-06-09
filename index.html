@@ -220,7 +220,8 @@
             z-index: 3000;
             backdrop-filter: blur(3px);
             text-align: center;
-            padding: 40px;
+            padding: 20px;
+            box-sizing: border-box;
         }
         
         .intro-poem {
@@ -230,9 +231,10 @@
             font-style: italic;
             font-family: 'Playfair Display', serif;
             text-shadow: 0 2px 8px rgba(0,0,0,0.7);
-            margin-bottom: 40px;
-            max-width: 600px;
+            margin-bottom: 30px;
+            max-width: 90%;
             font-weight: 300;
+            text-align: center;
         }
         
         .intro-arrow {
@@ -271,11 +273,18 @@
             
             .controls {
                 justify-content: center;
-                gap: 10px;
+                gap: 8px;
+                flex-wrap: wrap;
             }
             
             .controls input {
-                width: 150px;
+                width: 140px;
+                font-size: 14px;
+            }
+            
+            .controls select {
+                font-size: 14px;
+                padding-right: 30px;
             }
             
             .controls button {
@@ -288,11 +297,19 @@
             .info {
                 text-align: center;
                 font-size: 11px;
+                padding: 8px 10px;
+            }
+            
+            .info small {
+                display: block;
+                margin-top: 2px;
             }
             
             .intro-poem {
                 font-size: 18px;
-                padding: 0 20px;
+                padding: 0 15px;
+                line-height: 1.5;
+                margin-bottom: 25px;
             }
             
             .intro-arrow {
@@ -306,24 +323,72 @@
             }
             
             .tooltip {
-                max-width: 200px;
+                max-width: 180px;
                 font-size: 11px;
+                padding: 10px;
+            }
+            
+            .tooltip h4 {
+                font-size: 12px;
+                margin-bottom: 6px;
             }
             
             .export-content {
                 margin: 10px;
                 max-width: none;
                 width: calc(100% - 20px);
+                padding: 20px;
+            }
+            
+            .export-options {
+                flex-direction: column;
+                gap: 8px;
             }
             
             .export-options button {
-                min-width: 120px;
+                min-width: auto;
+                width: 100%;
                 padding: 12px 16px;
             }
             
             footer {
                 padding: 15px 10px !important;
                 font-size: 11px !important;
+            }
+            
+            footer p {
+                margin: 0 0 10px 0 !important;
+                line-height: 1.3 !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .intro-poem {
+                font-size: 16px;
+                padding: 0 10px;
+                line-height: 1.4;
+            }
+            
+            .intro-arrow {
+                padding: 10px 16px;
+            }
+            
+            .controls input {
+                width: 120px;
+                font-size: 13px;
+            }
+            
+            .header {
+                padding: 8px;
+            }
+            
+            .info {
+                font-size: 10px;
+            }
+            
+            .tooltip {
+                max-width: 160px;
+                font-size: 10px;
             }
         }
     </style>
@@ -633,11 +698,13 @@
             let numAnimals = visibleAnimals.length;
             if (numAnimals === 0) return;
             
-            // Better column calculation for more efficient use of space
-            if (screenWidth < 480) {
-                cols = Math.min(3, numAnimals);
-            } else if (screenWidth < 768) {
-                cols = Math.min(4, numAnimals);
+            // Better column calculation for mobile-first approach
+            if (screenWidth < 400) {
+                cols = Math.min(2, numAnimals); // Only 2 columns on very small screens
+            } else if (screenWidth < 600) {
+                cols = Math.min(3, numAnimals); // 3 columns on small phones
+            } else if (screenWidth < 800) {
+                cols = Math.min(4, numAnimals); // 4 columns on larger phones/small tablets
             } else if (screenWidth < 1024) {
                 cols = Math.min(6, numAnimals);
             } else if (screenWidth < 1440) {
@@ -650,9 +717,9 @@
             cols = Math.min(cols, numAnimals);
             rows = Math.ceil(numAnimals / cols);
             
-            // Optimized margins and spacing
-            let marginX = Math.max(20, screenWidth * 0.03);
-            let marginY = Math.max(30, screenHeight * 0.05);
+            // Mobile-optimized margins and spacing
+            let marginX = screenWidth < 600 ? 10 : Math.max(20, screenWidth * 0.03);
+            let marginY = screenWidth < 600 ? 15 : Math.max(30, screenHeight * 0.05);
             let availableWidth = screenWidth - (marginX * 2);
             let availableHeight = screenHeight - (marginY * 2);
             
@@ -663,17 +730,17 @@
             // Find the maximum heart size to ensure proper spacing
             let maxHeartSize = Math.max(...visibleAnimals.map(a => a.size));
             
-            // More efficient scaling to fit more animals
-            let maxContentHeight = cleanView ? maxHeartSize * 2.5 : maxHeartSize * 2.5 + 50;
-            let maxContentWidth = maxHeartSize * 2.5;
+            // Mobile-optimized scaling
+            let maxContentHeight = cleanView ? maxHeartSize * 2 : maxHeartSize * 2 + (screenWidth < 600 ? 30 : 50);
+            let maxContentWidth = maxHeartSize * 2;
             
-            // Scale factor based on available cell space
-            let scaleFactorX = Math.min(1.2, (cellWidth - 30) / maxContentWidth);
-            let scaleFactorY = Math.min(1.2, (cellHeight - 30) / maxContentHeight);
+            // Scale factor based on available cell space with mobile considerations
+            let scaleFactorX = Math.min(1.0, (cellWidth - (screenWidth < 600 ? 15 : 30)) / maxContentWidth);
+            let scaleFactorY = Math.min(1.0, (cellHeight - (screenWidth < 600 ? 15 : 30)) / maxContentHeight);
             let scaleFactor = Math.min(scaleFactorX, scaleFactorY);
             
-            // Minimum scale to keep hearts visible
-            scaleFactor = Math.max(0.2, Math.min(scaleFactor, 1.0));
+            // Minimum scale to keep hearts visible, more generous on mobile
+            scaleFactor = Math.max(screenWidth < 600 ? 0.3 : 0.2, Math.min(scaleFactor, 1.0));
             
             // Position animals with optimized spacing
             for (let i = 0; i < visibleAnimals.length; i++) {
