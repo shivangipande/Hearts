@@ -790,6 +790,8 @@
                 // Play audio heartbeat when visual heart flickers
                 if (hoveredAnimal === animal) {
                     createHeartbeat(animal);
+                    // Add haptic feedback on mobile for heartbeat
+                    triggerHapticFeedback();
                 }
             }
             
@@ -804,6 +806,21 @@
             } else {
                 animal.intensity = map(beatProgress, 0.3, 1, 0.2, 0);
                 animal.intensity = max(0, animal.intensity);
+            }
+        }
+        
+        function triggerHapticFeedback() {
+            // Check if device supports haptic feedback
+            if (navigator.vibrate) {
+                // Short, sharp vibration for heartbeat (50ms)
+                navigator.vibrate(50);
+            } else if (window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === 'function') {
+                // iOS devices - request permission first
+                DeviceMotionEvent.requestPermission().then(response => {
+                    if (response === 'granted' && navigator.vibrate) {
+                        navigator.vibrate(50);
+                    }
+                });
             }
         }
         
