@@ -43,38 +43,42 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 20px;
             backdrop-filter: blur(10px);
         }
         
         .controls {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             flex-wrap: wrap;
         }
         
         .controls input, .controls select, .controls button {
-            padding: 8px;
+            padding: 10px 12px;
             background: var(--bg-tertiary);
             color: var(--text-primary);
             border: 1px solid var(--border-color);
-            border-radius: 5px;
+            border-radius: 6px;
             font-family: 'Ginto', Arial, Helvetica, sans-serif;
+            font-size: 14px;
             transition: all 0.2s ease;
+            min-height: 40px;
+            box-sizing: border-box;
+        }
+        
+        .controls input {
+            width: 220px;
         }
         
         .controls select {
             padding-right: 35px;
-        }
-        
-        .controls input {
-            width: 200px;
+            min-width: 120px;
         }
         
         .controls button {
+            min-width: 44px;
             cursor: pointer;
-            background: var(--bg-tertiary);
         }
         
         .controls button:hover {
@@ -266,17 +270,16 @@
         
         @media (max-width: 768px) {
             body {
-                overflow-x: hidden; /* Allow vertical scrolling */
+                overflow-x: hidden;
             }
             
             .header {
                 flex-direction: column;
                 align-items: stretch;
-                padding: 15px 10px;
-                gap: 12px;
+                padding: 15px;
+                gap: 15px;
             }
             
-            /* First line: Search only - full width like heading */
             .controls {
                 display: flex;
                 flex-direction: column;
@@ -284,53 +287,50 @@
                 align-items: stretch;
             }
             
+            /* Search bar - full width row */
             .search-row {
-                display: flex;
-                justify-content: center;
                 width: 100%;
-                margin-bottom: 3px;
             }
             
+            .search-row input {
+                width: 100%;
+                font-size: 16px;
+                padding: 12px 16px;
+                border-radius: 8px;
+                text-align: left;
+                box-sizing: border-box;
+            }
+            
+            /* Buttons row */
             .buttons-row {
                 display: flex;
-                justify-content: center;
-                gap: 10px;
-                flex-wrap: wrap;
-                margin-bottom: 3px;
+                gap: 8px;
+                justify-content: space-between;
+                align-items: center;
             }
             
-            .controls input {
-                width: 100%;
-                max-width: none; /* Remove max-width constraint */
-                font-size: 16px; /* Larger font like heading */
-                padding: 12px 15px;
-                border-radius: 8px;
-                text-align: center; /* Center text like heading */
-            }
-            
-            .controls select {
-                font-size: 14px;
-                padding: 10px 30px 10px 10px;
+            .buttons-row select {
                 flex: 1;
-                max-width: 140px;
+                font-size: 14px;
+                padding: 10px 30px 10px 12px;
                 border-radius: 6px;
+                min-width: 0;
             }
             
-            .controls button {
-                padding: 10px 12px;
+            .buttons-row button {
+                padding: 10px;
                 font-size: 14px;
                 min-width: 44px;
                 min-height: 44px;
-                flex: 1;
                 border-radius: 6px;
+                flex-shrink: 0;
             }
             
             .info {
                 text-align: center;
                 font-size: 12px;
                 padding: 12px 15px;
-                margin-top: 5px;
-                margin-bottom: 8px;
+                margin: 5px 0;
                 border-radius: 6px;
             }
             
@@ -348,7 +348,6 @@
             }
             
             #canvas-container {
-                min-height: auto; /* Allow natural height */
                 margin-top: 10px;
             }
             
@@ -361,12 +360,6 @@
             
             .intro-arrow {
                 padding: 14px 24px;
-                font-size: 16px;
-            }
-            
-            .intro-arrow::after {
-                font-size: 16px;
-                content: 'ENTER';
             }
             
             .tooltip {
@@ -375,14 +368,8 @@
                 padding: 10px;
             }
             
-            .tooltip h4 {
-                font-size: 12px;
-                margin-bottom: 6px;
-            }
-            
             .export-content {
                 margin: 15px;
-                max-width: none;
                 width: calc(100% - 30px);
                 padding: 20px;
             }
@@ -393,50 +380,49 @@
             }
             
             .export-options button {
-                min-width: auto;
                 width: 100%;
                 padding: 14px 18px;
             }
             
             footer {
                 padding: 20px 15px !important;
-                font-size: 11px !important;
                 margin-top: 25px !important;
-            }
-            
-            footer p {
-                margin: 0 0 12px 0 !important;
-                line-height: 1.4 !important;
             }
         }
         
         @media (max-width: 480px) {
-            .intro-poem {
-                font-size: 16px;
-                padding: 0 10px;
-                line-height: 1.4;
-            }
-            
-            .intro-arrow {
-                padding: 10px 16px;
-            }
-            
-            .controls input {
-                width: 120px;
-                font-size: 13px;
-            }
-            
             .header {
-                padding: 8px;
+                padding: 12px;
+                gap: 12px;
+            }
+            
+            .search-row input {
+                font-size: 16px;
+                padding: 12px 14px;
+            }
+            
+            .buttons-row {
+                gap: 6px;
+            }
+            
+            .buttons-row select {
+                font-size: 13px;
+                padding: 9px 25px 9px 10px;
+            }
+            
+            .buttons-row button {
+                padding: 9px;
+                min-width: 42px;
+                min-height: 42px;
             }
             
             .info {
-                font-size: 10px;
+                font-size: 11px;
+                padding: 10px 12px;
             }
             
-            .tooltip {
-                max-width: 160px;
-                font-size: 10px;
+            .info strong {
+                font-size: 15px;
             }
         }
     </style>
@@ -750,17 +736,13 @@
             let numAnimals = visibleAnimals.length;
             if (numAnimals === 0) return;
             
-            // Mobile-first grid - allow more rows and scrolling
-            if (screenWidth < 400) {
-                cols = Math.min(2, numAnimals); // 2 columns on very small screens
-            } else if (screenWidth < 600) {
-                cols = Math.min(3, numAnimals); // 3 columns on small phones
-            } else if (screenWidth < 800) {
-                cols = Math.min(4, numAnimals); // 4 columns on larger phones
+            // Simple mobile grid - 3 columns with proper spacing
+            if (screenWidth < 768) {
+                cols = 3; // Always 3 columns on mobile
             } else if (screenWidth < 1024) {
-                cols = Math.min(6, numAnimals);
+                cols = 6;
             } else if (screenWidth < 1440) {
-                cols = Math.min(8, numAnimals);
+                cols = 8;
             } else {
                 cols = Math.min(10, numAnimals);
             }
@@ -769,39 +751,28 @@
             cols = Math.min(cols, numAnimals);
             rows = Math.ceil(numAnimals / cols);
             
-            // Mobile gets generous spacing and allows scrolling
-            let marginX = screenWidth < 600 ? 15 : Math.max(20, screenWidth * 0.03);
-            let marginY = screenWidth < 600 ? 20 : Math.max(30, screenHeight * 0.05);
+            // Simple spacing for mobile
+            let marginX = screenWidth < 768 ? 20 : Math.max(20, screenWidth * 0.03);
+            let marginY = screenWidth < 768 ? 30 : Math.max(30, screenHeight * 0.05);
             let availableWidth = screenWidth - (marginX * 2);
             
-            // On mobile, calculate based on fixed cell size rather than screen height
+            // Calculate cell dimensions with generous spacing
             let cellWidth = availableWidth / cols;
-            let cellHeight = screenWidth < 768 ? 120 : availableWidth / cols; // Fixed height on mobile
+            let cellHeight = screenWidth < 768 ? 150 : screenHeight > 0 ? (screenHeight - (marginY * 2)) / rows : cellWidth;
             
-            // Calculate total canvas height needed (allow scrolling on mobile)
-            let totalCanvasHeight = screenWidth < 768 ? 
-                (rows * cellHeight) + (marginY * 2) : 
-                screenHeight;
-            
-            // Resize canvas to fit all content on mobile
-            if (screenWidth < 768 && totalCanvasHeight > screenHeight) {
+            // On mobile, make canvas tall enough for all content
+            if (screenWidth < 768) {
+                let totalCanvasHeight = (rows * cellHeight) + (marginY * 2);
                 resizeCanvas(canvasWidth, totalCanvasHeight);
             }
             
-            // Find the maximum heart size
+            // Simple scaling
             let maxHeartSize = Math.max(...visibleAnimals.map(a => a.size));
+            let availableCellSpace = Math.min(cellWidth, cellHeight) - 60; // Leave 60px for text
+            let scaleFactor = availableCellSpace / (maxHeartSize * 2);
             
-            // Mobile-optimized scaling - more generous
-            let maxContentHeight = cleanView ? maxHeartSize * 1.5 : maxHeartSize * 1.5 + 40;
-            let maxContentWidth = maxHeartSize * 1.5;
-            
-            // Scale factor - more generous on mobile
-            let scaleFactorX = Math.min(1.0, (cellWidth - 20) / maxContentWidth);
-            let scaleFactorY = Math.min(1.0, (cellHeight - 20) / maxContentHeight);
-            let scaleFactor = Math.min(scaleFactorX, scaleFactorY);
-            
-            // Better minimum scale on mobile
-            scaleFactor = Math.max(screenWidth < 600 ? 0.4 : 0.3, Math.min(scaleFactor, 1.0));
+            // Keep hearts reasonable size
+            scaleFactor = Math.max(0.2, Math.min(scaleFactor, 1.0));
             
             // Position animals with optimized spacing
             for (let i = 0; i < visibleAnimals.length; i++) {
