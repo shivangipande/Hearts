@@ -224,6 +224,21 @@
             font-weight: bold;
         }
         
+        .info-icon {
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-left: 5px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            user-select: none;
+        }
+        
+        .info-icon:hover {
+            opacity: 1;
+            color: var(--accent-color);
+        }
+        
         .export-modal {
             position: fixed;
             top: 0;
@@ -251,6 +266,78 @@
         .export-content h3 {
             margin-top: 0;
             color: var(--accent-color);
+        }
+        
+        .info-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2500;
+        }
+        
+        .info-content {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            max-width: 500px;
+            min-width: 320px;
+            width: auto;
+            box-sizing: border-box;
+            backdrop-filter: blur(10px);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .info-content h3 {
+            margin-top: 0;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-content p {
+            line-height: 1.5;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+        
+        .info-content ul {
+            margin: 15px 0;
+            padding-left: 20px;
+            color: var(--text-primary);
+        }
+        
+        .info-content li {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .empathy-scale-demo {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid var(--border-color);
+        }
+        
+        .scale-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 13px;
+        }
+        
+        .scale-hearts {
+            font-size: 14px;
         }
         
         .export-options {
@@ -359,19 +446,18 @@
                 align-items: stretch;
                 padding: 15px;
                 gap: 15px;
-                overflow-x: hidden; /* Prevent header overflow */
+                overflow-x: hidden;
             }
             
             .controls {
                 display: flex;
                 gap: 8px;
                 align-items: center;
-                flex-wrap: nowrap; /* Force single line - make search shrink instead */
-                overflow-x: hidden; /* Prevent controls overflow */
-                max-width: 100%; /* Ensure it fits in viewport */
+                flex-wrap: nowrap;
+                overflow-x: hidden;
+                max-width: 100%;
             }
             
-            /* Just reduce search minimum width - keep everything else normal */
             .search-row {
                 flex: 1;
                 min-width: 120px;
@@ -392,7 +478,6 @@
                 flex-shrink: 0;
             }
             
-            /* Hide sort dropdown and clean view button on mobile */
             #sortSelect {
                 display: none !important;
             }
@@ -485,8 +570,8 @@
             }
             
             .search-row {
-                min-width: 120px; /* Even smaller on tiny screens */
-                max-width: 65%; /* More room for buttons */
+                min-width: 120px;
+                max-width: 65%;
             }
             
             .search-row input {
@@ -529,6 +614,7 @@
                     <div class="option" data-value="alphabetical">🔤 Name</div>
                     <div class="option" data-value="heartrate">💓 BPM</div>
                     <div class="option" data-value="size">📏 Size</div>
+                    <div class="option" data-value="empathy">💗 Empathy</div>
                 </div>
             </div>
             <button id="cleanViewBtn" class="toggle-btn" onclick="toggleCleanView()" title="Toggle clean view">🧹</button>
@@ -539,7 +625,7 @@
         <div class="info">
             <div>
                 <strong>Rhythms of Life</strong><br>
-                <small>An interactive map of animal heartbeats</small><br>
+                <small>An interactive map of animal heartbeats and the empathy we humans feel for them</small><br>
                 <small>Dot size = heart mass • Flicker rate = BPM • Touch for audio & haptics</small>
             </div>
         </div>
@@ -584,6 +670,53 @@
         <div class="intro-arrow" onclick="closeIntroModal()"></div>
     </div>
     
+    <div id="infoModal" class="info-modal">
+        <div class="info-content">
+            <h3>💗 Understanding the Empathy Scale</h3>
+            <p>A visual scale of how emotionally connected humans typically feel to each species. This scale is based on real psychological studies and anthropomorphic traits.</p>
+            
+            <h4 style="color: var(--accent-color); font-size: 16px; margin: 20px 0 10px 0;">Key Factors:</h4>
+            <ul>
+                <li><strong>Facial resemblance</strong> - Eyes, expressions, and human-like features</li>
+                <li><strong>Domestication/familiarity</strong> - Pets, cultural icons, stories</li>
+                <li><strong>Vulnerability</strong> - Size, voice, cuteness factor</li>
+                <li><strong>Cultural symbolism</strong> - Mythology, religion, folklore</li>
+            </ul>
+            
+            <div class="empathy-scale-demo">
+                <h4 style="margin-top: 0; color: var(--accent-color); font-size: 14px;">Scale Examples:</h4>
+                <div class="scale-item">
+                    <span>💗💗💗💗💗 Advanced</span>
+                    <span style="color: var(--text-secondary);">Dogs, Cats, Horses</span>
+                </div>
+                <div class="scale-item">
+                    <span>💗💗💗💗🤍 High</span>
+                    <span style="color: var(--text-secondary);">Rabbits, Dolphins, Elephants</span>
+                </div>
+                <div class="scale-item">
+                    <span>💗💗💗🤍🤍 Moderate</span>
+                    <span style="color: var(--text-secondary);">Farm Animals, Bears</span>
+                </div>
+                <div class="scale-item">
+                    <span>💗💗🤍🤍🤍 Limited</span>
+                    <span style="color: var(--text-secondary);">Fish, Birds, Reptiles</span>
+                </div>
+                <div class="scale-item">
+                    <span>💗🤍🤍🤍🤍 Basic</span>
+                    <span style="color: var(--text-secondary);">Insects, Spiders</span>
+                </div>
+            </div>
+            
+            <p style="font-size: 12px; color: var(--text-secondary); font-style: italic;">
+                Research sources include the <em>Anthrozoös</em> journal, human-animal empathy studies in psychology, and cultural analysis of animals as moral agents in literature.
+            </p>
+            
+            <div style="text-align: center; margin-top: 20px; color: var(--text-secondary); font-size: 12px;">
+                Click outside to close
+            </div>
+        </div>
+    </div>
+    
     <script>
         let allAnimals = [];
         let visibleAnimals = [];
@@ -592,7 +725,7 @@
         let cols = 8;
         let rows = 6;
         let canvasWidth = window.innerWidth;
-        let canvasHeight = window.innerWidth < 768 ? window.innerHeight - 120 : window.innerHeight - 200; // Less space reserved on mobile
+        let canvasHeight = window.innerWidth < 768 ? window.innerHeight - 120 : window.innerHeight - 200;
         let cleanView = false;
         let isDarkTheme = true;
         let hoveredAnimal = null;
@@ -616,43 +749,34 @@
             if (!isAudioEnabled || !audioContext) return;
             
             try {
-                // Create oscillator for the heartbeat sound
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
                 
-                // Connect audio nodes
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
                 
-                // Configure heartbeat sound - different frequencies for different BPM ranges
                 let baseFreq;
                 if (bpm < 50) {
-                    // Very slow hearts get deeper, more powerful sound
                     baseFreq = 50;
                 } else if (bpm < 100) {
-                    // Medium hearts
                     baseFreq = 70;
                 } else if (bpm < 200) {
-                    // Fast hearts
                     baseFreq = 90;
                 } else {
-                    // Very fast hearts get higher pitch
                     baseFreq = 110;
                 }
                 
                 oscillator.frequency.setValueAtTime(baseFreq, audioContext.currentTime);
                 oscillator.type = 'sine';
                 
-                // Create heartbeat envelope - longer for slow hearts, shorter for fast
                 const now = audioContext.currentTime;
-                const duration = bpm < 60 ? 0.25 : 0.15; // Longer sound for slow hearts
-                const volume = bpm < 60 ? 0.5 : 0.4; // Louder for slow hearts
+                const duration = bpm < 60 ? 0.25 : 0.15;
+                const volume = bpm < 60 ? 0.5 : 0.4;
                 
                 gainNode.gain.setValueAtTime(0, now);
                 gainNode.gain.linearRampToValueAtTime(volume, now + 0.02);
                 gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
                 
-                // Play the sound
                 oscillator.start(now);
                 oscillator.stop(now + duration);
             } catch (error) {
@@ -663,31 +787,21 @@
         function startHeartbeatAudio(animal) {
             if (!isAudioEnabled || currentHeartbeatInterval) return;
             
-            // Store current animal for volume calculation
             window.currentAnimal = animal;
             
-            // Calculate interval but set reasonable limits for user experience
             const rawInterval = 60000 / animal.bpm;
             let interval;
             
-            // Cap the maximum interval so slow hearts don't have huge gaps
             if (rawInterval > 800) {
-                // For very slow hearts, cap at 800ms max (75 BPM equivalent)
                 interval = 800;
-                console.log(`🐘 Slow heart ${animal.name}: ${animal.bpm} BPM (${rawInterval}ms) capped to ${interval}ms`);
             } else if (rawInterval < 150) {
-                // For very fast hearts, minimum 150ms to avoid audio overlap
                 interval = 150;
-                console.log(`🐜 Fast heart ${animal.name}: ${animal.bpm} BPM (${rawInterval}ms) increased to ${interval}ms`);
             } else {
                 interval = rawInterval;
-                console.log(`💓 Normal heart ${animal.name}: ${animal.bpm} BPM using ${interval}ms`);
             }
             
-            // Play first beat immediately
             createHeartbeat(animal.bpm, animal.name);
             
-            // Set up repeating heartbeat with adjusted timing
             currentHeartbeatInterval = setInterval(() => {
                 createHeartbeat(animal.bpm, animal.name);
             }, interval);
@@ -704,89 +818,65 @@
             let canvas = createCanvas(canvasWidth, canvasHeight);
             canvas.parent('canvas-container');
             
-            // Comprehensive collection of animals - including all food animals
             allAnimals = [
-                // Small insects (fast hearts)
-                {name: "ANT", bpm: 418, size: 5, heartMass: "0.0g", scientificName: "Myrmecia croslandi", category: "Insect", lifespan: "1-2 years"},
-                {name: "GRASSHOPPER", bpm: 391, size: 6, heartMass: "0.0g", scientificName: "Schistocerca gregaria", category: "Insect", lifespan: "6-12 months"},
-                {name: "MOTH", bpm: 369, size: 7, heartMass: "0.0g", scientificName: "Manduca sexta", category: "Moth", lifespan: "2-6 weeks"},
-                {name: "BEE", bpm: 318, size: 8, heartMass: "0.0g", scientificName: "Bombus impatiens", category: "Insect", lifespan: "6 months"},
-                
-                // Amphibians & Marine
-                {name: "FROG", bpm: 144, size: 15, heartMass: "0.04g", scientificName: "Rana clamitans", category: "Amphibian", lifespan: "8-10 years"},
-                {name: "FISH", bpm: 380, size: 12, heartMass: "1g", scientificName: "Small fish species", category: "Fish", lifespan: "2-5 years"},
-                {name: "SALMON", bpm: 120, size: 28, heartMass: "25g", scientificName: "Salmo salar", category: "Fish", lifespan: "4-6 years"},
-                {name: "TUNA", bpm: 140, size: 45, heartMass: "180g", scientificName: "Thunnus thynnus", category: "Fish", lifespan: "15-30 years"},
-                {name: "OCTOPUS", bpm: 45, size: 18, heartMass: "3g", scientificName: "Octopus vulgaris", category: "Mollusk", lifespan: "1-5 years"},
-                {name: "CRAB", bpm: 200, size: 10, heartMass: "0.5g", scientificName: "Callinectes sapidus", category: "Crustacean", lifespan: "2-3 years"},
-                {name: "SHRIMP", bpm: 350, size: 6, heartMass: "0.1g", scientificName: "Penaeus vannamei", category: "Crustacean", lifespan: "1-2 years"},
-                
-                // Small mammals
-                {name: "MOUSE", bpm: 600, size: 8, heartMass: "0.1g", scientificName: "Mus musculus", category: "Mammal", lifespan: "1-3 years"},
-                {name: "HAMSTER", bpm: 450, size: 10, heartMass: "0.5g", scientificName: "Mesocricetus auratus", category: "Mammal", lifespan: "2-3 years"},
-                {name: "RABBIT", bpm: 220, size: 18, heartMass: "6g", scientificName: "Oryctolagus cuniculus", category: "Mammal", lifespan: "8-12 years"},
-                
-                // Common pets
-                {name: "CAT", bpm: 180, size: 25, heartMass: "15g", scientificName: "Felis catus", category: "Mammal", lifespan: "12-18 years"},
-                {name: "DOG", bpm: 120, size: 35, heartMass: "150g", scientificName: "Canis familiaris", category: "Mammal", lifespan: "10-13 years"},
-                
-                // Farm birds (food)
-                {name: "CHICKEN", bpm: 280, size: 22, heartMass: "10g", scientificName: "Gallus gallus", category: "Bird", lifespan: "5-10 years"},
-                {name: "DUCK", bpm: 190, size: 24, heartMass: "8g", scientificName: "Anas platyrhynchos", category: "Bird", lifespan: "5-10 years"},
-                {name: "TURKEY", bpm: 93, size: 38, heartMass: "45g", scientificName: "Meleagris gallopavo", category: "Bird", lifespan: "10 years"},
-                {name: "GOOSE", bpm: 120, size: 42, heartMass: "65g", scientificName: "Anser anser", category: "Bird", lifespan: "20-30 years"},
-                {name: "QUAIL", bpm: 250, size: 12, heartMass: "0.58g", scientificName: "Coturnix coturnix", category: "Bird", lifespan: "3-5 years"},
-                {name: "PIGEON", bpm: 350, size: 16, heartMass: "4g", scientificName: "Columba livia", category: "Bird", lifespan: "6 years"},
-                {name: "OSTRICH", bpm: 60, size: 95, heartMass: "900g", scientificName: "Struthio camelus", category: "Bird", lifespan: "40-45 years"},
-                
-                // Farm mammals (food)
-                {name: "PIG", bpm: 85, size: 65, heartMass: "500g", scientificName: "Sus scrofa", category: "Mammal", lifespan: "15-20 years"},
-                {name: "SHEEP", bpm: 75, size: 55, heartMass: "250g", scientificName: "Ovis aries", category: "Mammal", lifespan: "10-12 years"},
-                {name: "GOAT", bpm: 90, size: 48, heartMass: "200g", scientificName: "Capra hircus", category: "Mammal", lifespan: "15-18 years"},
-                {name: "COW", bpm: 65, size: 85, heartMass: "2500g", scientificName: "Bos taurus", category: "Mammal", lifespan: "18-22 years"},
-                {name: "BUFFALO", bpm: 55, size: 90, heartMass: "3200g", scientificName: "Bubalus bubalis", category: "Mammal", lifespan: "20-25 years"},
-                {name: "DEER", bpm: 70, size: 52, heartMass: "300g", scientificName: "Odocoileus virginianus", category: "Mammal", lifespan: "10-13 years"},
-                {name: "CAMEL", bpm: 50, size: 88, heartMass: "4500g", scientificName: "Camelus dromedarius", category: "Mammal", lifespan: "40-50 years"},
-                {name: "YAK", bpm: 45, size: 92, heartMass: "5000g", scientificName: "Bos grunniens", category: "Mammal", lifespan: "20-25 years"},
-                
-                // Working animals
-                {name: "HORSE", bpm: 38, size: 95, heartMass: "4000g", scientificName: "Equus caballus", category: "Mammal", lifespan: "25-30 years"},
-                
-                // Humans
-                {name: "HUMAN", bpm: 72, size: 50, heartMass: "300g", scientificName: "Homo sapiens", category: "Mammal", lifespan: "70-80 years"},
-                
-                // Large birds (slow hearts)
-                {name: "SWAN", bpm: 80, size: 58, heartMass: "35g", scientificName: "Cygnus olor", category: "Bird", lifespan: "20-30 years"},
-                {name: "EMU", bpm: 27, size: 75, heartMass: "29.92g", scientificName: "Dromaius novaehollandiae", category: "Bird", lifespan: "10-20 years"},
-                {name: "CASSOWARY", bpm: 26, size: 80, heartMass: "37.66g", scientificName: "Casuarius casuarius", category: "Bird", lifespan: "40-50 years"}
+                {name: "ANT", bpm: 418, size: 5, heartMass: "0.0g", scientificName: "Myrmecia croslandi", category: "Insect", lifespan: "1-2 years", empathy: 1},
+                {name: "GRASSHOPPER", bpm: 391, size: 6, heartMass: "0.0g", scientificName: "Schistocerca gregaria", category: "Insect", lifespan: "6-12 months", empathy: 1},
+                {name: "MOTH", bpm: 369, size: 7, heartMass: "0.0g", scientificName: "Manduca sexta", category: "Moth", lifespan: "2-6 weeks", empathy: 1},
+                {name: "BEE", bpm: 318, size: 8, heartMass: "0.0g", scientificName: "Bombus impatiens", category: "Insect", lifespan: "6 months", empathy: 2},
+                {name: "FROG", bpm: 144, size: 15, heartMass: "0.04g", scientificName: "Rana clamitans", category: "Amphibian", lifespan: "8-10 years", empathy: 2},
+                {name: "FISH", bpm: 380, size: 12, heartMass: "1g", scientificName: "Small fish species", category: "Fish", lifespan: "2-5 years", empathy: 2},
+                {name: "SALMON", bpm: 120, size: 28, heartMass: "25g", scientificName: "Salmo salar", category: "Fish", lifespan: "4-6 years", empathy: 2},
+                {name: "TUNA", bpm: 140, size: 45, heartMass: "180g", scientificName: "Thunnus thynnus", category: "Fish", lifespan: "15-30 years", empathy: 2},
+                {name: "OCTOPUS", bpm: 45, size: 18, heartMass: "3g", scientificName: "Octopus vulgaris", category: "Mollusk", lifespan: "1-5 years", empathy: 3},
+                {name: "CRAB", bpm: 200, size: 10, heartMass: "0.5g", scientificName: "Callinectes sapidus", category: "Crustacean", lifespan: "2-3 years", empathy: 2},
+                {name: "SHRIMP", bpm: 350, size: 6, heartMass: "0.1g", scientificName: "Penaeus vannamei", category: "Crustacean", lifespan: "1-2 years", empathy: 1},
+                {name: "MOUSE", bpm: 600, size: 8, heartMass: "0.1g", scientificName: "Mus musculus", category: "Mammal", lifespan: "1-3 years", empathy: 3},
+                {name: "HAMSTER", bpm: 450, size: 10, heartMass: "0.5g", scientificName: "Mesocricetus auratus", category: "Mammal", lifespan: "2-3 years", empathy: 4},
+                {name: "RABBIT", bpm: 220, size: 18, heartMass: "6g", scientificName: "Oryctolagus cuniculus", category: "Mammal", lifespan: "8-12 years", empathy: 4},
+                {name: "CAT", bpm: 180, size: 25, heartMass: "15g", scientificName: "Felis catus", category: "Mammal", lifespan: "12-18 years", empathy: 5},
+                {name: "DOG", bpm: 120, size: 35, heartMass: "150g", scientificName: "Canis familiaris", category: "Mammal", lifespan: "10-13 years", empathy: 5},
+                {name: "CHICKEN", bpm: 280, size: 22, heartMass: "10g", scientificName: "Gallus gallus", category: "Bird", lifespan: "5-10 years", empathy: 3},
+                {name: "DUCK", bpm: 190, size: 24, heartMass: "8g", scientificName: "Anas platyrhynchos", category: "Bird", lifespan: "5-10 years", empathy: 3},
+                {name: "TURKEY", bpm: 93, size: 38, heartMass: "45g", scientificName: "Meleagris gallopavo", category: "Bird", lifespan: "10 years", empathy: 3},
+                {name: "GOOSE", bpm: 120, size: 42, heartMass: "65g", scientificName: "Anser anser", category: "Bird", lifespan: "20-30 years", empathy: 3},
+                {name: "QUAIL", bpm: 250, size: 12, heartMass: "0.58g", scientificName: "Coturnix coturnix", category: "Bird", lifespan: "3-5 years", empathy: 2},
+                {name: "PIGEON", bpm: 350, size: 16, heartMass: "4g", scientificName: "Columba livia", category: "Bird", lifespan: "6 years", empathy: 2},
+                {name: "OSTRICH", bpm: 60, size: 95, heartMass: "900g", scientificName: "Struthio camelus", category: "Bird", lifespan: "40-45 years", empathy: 3},
+                {name: "PIG", bpm: 85, size: 65, heartMass: "500g", scientificName: "Sus scrofa", category: "Mammal", lifespan: "15-20 years", empathy: 3},
+                {name: "SHEEP", bpm: 75, size: 55, heartMass: "250g", scientificName: "Ovis aries", category: "Mammal", lifespan: "10-12 years", empathy: 3},
+                {name: "GOAT", bpm: 90, size: 48, heartMass: "200g", scientificName: "Capra hircus", category: "Mammal", lifespan: "15-18 years", empathy: 3},
+                {name: "COW", bpm: 65, size: 85, heartMass: "2500g", scientificName: "Bos taurus", category: "Mammal", lifespan: "18-22 years", empathy: 3},
+                {name: "BUFFALO", bpm: 55, size: 90, heartMass: "3200g", scientificName: "Bubalus bubalis", category: "Mammal", lifespan: "20-25 years", empathy: 3},
+                {name: "DEER", bpm: 70, size: 52, heartMass: "300g", scientificName: "Odocoileus virginianus", category: "Mammal", lifespan: "10-13 years", empathy: 4},
+                {name: "CAMEL", bpm: 50, size: 88, heartMass: "4500g", scientificName: "Camelus dromedarius", category: "Mammal", lifespan: "40-50 years", empathy: 3},
+                {name: "YAK", bpm: 45, size: 92, heartMass: "5000g", scientificName: "Bos grunniens", category: "Mammal", lifespan: "20-25 years", empathy: 3},
+                {name: "HORSE", bpm: 38, size: 95, heartMass: "4000g", scientificName: "Equus caballus", category: "Mammal", lifespan: "25-30 years", empathy: 5},
+                {name: "HUMAN", bpm: 72, size: 50, heartMass: "300g", scientificName: "Homo sapiens", category: "Mammal", lifespan: "70-80 years", empathy: 5},
+                {name: "SWAN", bpm: 80, size: 58, heartMass: "35g", scientificName: "Cygnus olor", category: "Bird", lifespan: "20-30 years", empathy: 4},
+                {name: "EMU", bpm: 27, size: 75, heartMass: "29.92g", scientificName: "Dromaius novaehollandiae", category: "Bird", lifespan: "10-20 years", empathy: 2},
+                {name: "CASSOWARY", bpm: 26, size: 80, heartMass: "37.66g", scientificName: "Casuarius casuarius", category: "Bird", lifespan: "40-50 years", empathy: 2}
             ];
             
             tooltip = document.getElementById('tooltip');
             initializeAnimals();
             updateDisplay();
             
-            // Set up event listeners
             document.getElementById('searchInput').addEventListener('input', handleSearch);
             document.getElementById('sortSelect').addEventListener('change', handleSort);
             
-            // Handle window resize
             window.addEventListener('resize', handleResize);
             
-            // Mouse events for tooltip
             canvas.canvas.addEventListener('mousemove', handleMouseMove);
             canvas.canvas.addEventListener('mouseleave', hideTooltip);
             
-            // Touch events for mobile
             canvas.canvas.addEventListener('touchstart', handleTouchStart);
             canvas.canvas.addEventListener('touchmove', handleTouchMove);
             canvas.canvas.addEventListener('touchend', handleTouchEnd);
             
-            // Show intro modal on first load
             setTimeout(() => {
                 document.getElementById('introModal').style.display = 'flex';
             }, 500);
             
-            // Initialize audio (will be enabled after user interaction)
             initAudio();
         }
         
@@ -802,7 +892,6 @@
         }
         
         function updateDisplay() {
-            // Filter animals based on search
             if (searchTerm) {
                 visibleAnimals = allAnimals.filter(animal => 
                     animal.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -811,25 +900,24 @@
                 visibleAnimals = [...allAnimals];
             }
             
-            // Sort animals
             if (currentSort === 'alphabetical') {
                 visibleAnimals.sort((a, b) => a.name.localeCompare(b.name));
             } else if (currentSort === 'heartrate') {
                 visibleAnimals.sort((a, b) => a.bpm - b.bpm);
             } else if (currentSort === 'size') {
                 visibleAnimals.sort((a, b) => b.size - a.size);
+            } else if (currentSort === 'empathy') {
+                visibleAnimals.sort((a, b) => b.empathy - a.empathy);
             }
             
-            // Calculate responsive grid layout with optimized spacing
             let screenWidth = window.innerWidth;
-            let screenHeight = window.innerWidth < 768 ? window.innerHeight - 120 : window.innerHeight - 200; // Less space on mobile
+            let screenHeight = window.innerWidth < 768 ? window.innerHeight - 120 : window.innerHeight - 200;
             
             let numAnimals = visibleAnimals.length;
             if (numAnimals === 0) return;
             
-            // Simple mobile grid - 3 columns with proper spacing
             if (screenWidth < 768) {
-                cols = 3; // Always 3 columns on mobile
+                cols = 3;
             } else if (screenWidth < 1024) {
                 cols = 6;
             } else if (screenWidth < 1440) {
@@ -838,49 +926,39 @@
                 cols = Math.min(10, numAnimals);
             }
             
-            // Ensure we don't have more columns than animals
             cols = Math.min(cols, numAnimals);
             rows = Math.ceil(numAnimals / cols);
             
-            // Simple spacing for mobile
             let marginX = screenWidth < 768 ? 20 : Math.max(20, screenWidth * 0.03);
             let marginY = screenWidth < 768 ? 30 : Math.max(30, screenHeight * 0.05);
             let availableWidth = screenWidth - (marginX * 2);
             
-            // Calculate cell dimensions with generous spacing
             let cellWidth = availableWidth / cols;
             let cellHeight = screenWidth < 768 ? 150 : screenHeight > 0 ? (screenHeight - (marginY * 2)) / rows : cellWidth;
             
-            // On mobile, make canvas tall enough for all content
             if (screenWidth < 768) {
                 let totalCanvasHeight = (rows * cellHeight) + (marginY * 2);
                 resizeCanvas(canvasWidth, totalCanvasHeight);
             }
             
-            // Simple scaling
             let maxHeartSize = Math.max(...visibleAnimals.map(a => a.size));
-            let availableCellSpace = Math.min(cellWidth, cellHeight) - 60; // Leave 60px for text
+            let availableCellSpace = Math.min(cellWidth, cellHeight) - 60;
             let scaleFactor = availableCellSpace / (maxHeartSize * 2);
             
-            // Keep hearts reasonable size
             scaleFactor = Math.max(0.2, Math.min(scaleFactor, 1.0));
             
-            // Position animals with optimized spacing
             for (let i = 0; i < visibleAnimals.length; i++) {
                 let col = i % cols;
                 let row = Math.floor(i / cols);
                 
-                // Center animals in their cells
                 visibleAnimals[i].x = marginX + (col * cellWidth) + (cellWidth / 2);
                 visibleAnimals[i].y = marginY + (row * cellHeight) + (cellHeight / 2);
                 
-                // Apply optimized scaling to heart sizes
                 visibleAnimals[i].displaySize = visibleAnimals[i].size * scaleFactor;
             }
         }
         
         function draw() {
-            // Set background based on theme
             if (isDarkTheme) {
                 background(26, 26, 26);
             } else {
@@ -889,14 +967,12 @@
             
             let currentTime = millis();
             
-            // Update and draw each visible animal
             for (let animal of visibleAnimals) {
                 updateHeartbeat(animal, currentTime);
                 drawHeart(animal);
-                drawLabel(animal); // Always draw labels (function handles clean view internally)
+                drawLabel(animal);
             }
             
-            // Draw instructions if no animals visible
             if (visibleAnimals.length === 0) {
                 fill(isDarkTheme ? 100 : 150);
                 textAlign(CENTER, CENTER);
@@ -910,10 +986,8 @@
                 animal.lastBeat = currentTime;
                 animal.phase = 0;
                 
-                // Play audio heartbeat when visual heart flickers
                 if (hoveredAnimal === animal) {
                     createHeartbeat(animal);
-                    // Add haptic feedback on mobile for heartbeat
                     triggerHapticFeedback();
                 }
             }
@@ -933,12 +1007,9 @@
         }
         
         function triggerHapticFeedback() {
-            // Check if device supports haptic feedback
             if (navigator.vibrate) {
-                // Short, sharp vibration for heartbeat (50ms)
                 navigator.vibrate(50);
             } else if (window.DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === 'function') {
-                // iOS devices - request permission first
                 DeviceMotionEvent.requestPermission().then(response => {
                     if (response === 'granted' && navigator.vibrate) {
                         navigator.vibrate(50);
@@ -959,7 +1030,6 @@
             let blue = map(animal.intensity, 0, 1, 0, isDarkTheme ? 50 : 132);
             let alpha = map(animal.intensity, 0, 1, 150, 255);
             
-            // Glow effect
             if (animal.intensity > 0.1) {
                 let glowSize = currentSize * 1.8;
                 let glowAlpha = animal.intensity * 60;
@@ -973,12 +1043,10 @@
                 }
             }
             
-            // Main heart dot
             fill(red, green, blue, alpha);
             noStroke();
             ellipse(0, 0, currentSize);
             
-            // Core highlight
             fill(255, 100, 100, animal.intensity * 150);
             ellipse(-currentSize/6, -currentSize/6, currentSize/4);
             
@@ -991,14 +1059,12 @@
             let baseSize = animal.displaySize || animal.size;
             let scaleFactor = Math.max(0.6, Math.min(1.2, baseSize / 20));
             
-            // Always show animal name
             fill(isDarkTheme ? 255 : 51, isDarkTheme ? 255 : 51, isDarkTheme ? 255 : 51, 200);
             textAlign(CENTER);
             textSize(Math.max(8, 9 * scaleFactor));
             textStyle(BOLD);
             text(animal.name, animal.x, animal.y - baseSize - 12);
             
-            // Show additional info only when NOT in clean view
             if (!cleanView) {
                 fill(isDarkTheme ? 255 : 214, 100, isDarkTheme ? 100 : 132, 180);
                 textSize(Math.max(7, 8 * scaleFactor));
@@ -1022,7 +1088,7 @@
         }
         
         function handleTouchStart(event) {
-            event.preventDefault(); // Prevent scrolling
+            event.preventDefault();
             let touch = event.touches[0];
             let rect = event.target.getBoundingClientRect();
             let touchX = touch.clientX - rect.left;
@@ -1032,7 +1098,7 @@
         }
         
         function handleTouchMove(event) {
-            event.preventDefault(); // Prevent scrolling
+            event.preventDefault();
             let touch = event.touches[0];
             let rect = event.target.getBoundingClientRect();
             let touchX = touch.clientX - rect.left;
@@ -1050,16 +1116,14 @@
             let previousHoveredAnimal = hoveredAnimal;
             hoveredAnimal = null;
             
-            // Check if touch/mouse is over any animal
             for (let animal of visibleAnimals) {
                 let distance = dist(x, y, animal.x, animal.y);
                 let baseSize = animal.displaySize || animal.size;
                 
-                if (distance < baseSize + 15) { // Slightly larger hit area for mobile
+                if (distance < baseSize + 15) {
                     hoveredAnimal = animal;
                     showTooltip(event, animal, x, y);
                     
-                    // Start heartbeat audio if this is a new animal
                     if (previousHoveredAnimal !== animal) {
                         stopHeartbeatAudio();
                         startHeartbeatAudio(animal);
@@ -1068,7 +1132,6 @@
                 }
             }
             
-            // If no animal is hovered, stop audio and hide tooltip
             if (previousHoveredAnimal !== null) {
                 stopHeartbeatAudio();
             }
@@ -1076,12 +1139,13 @@
         }
         
         function showTooltip(event, animal, x, y) {
+            function getEmpathyDisplay(level) {
+                const hearts = '❤️'.repeat(level) + '🤍'.repeat(5 - level);
+                return hearts;
+            }
+            
             tooltip.innerHTML = `
                 <h4>${animal.name}</h4>
-                <div class="stat">
-                    <span class="stat-label">Scientific Name:</span>
-                    <span class="stat-value">${animal.scientificName}</span>
-                </div>
                 <div class="stat">
                     <span class="stat-label">Heart Rate:</span>
                     <span class="stat-value">${animal.bpm} BPM</span>
@@ -1102,47 +1166,40 @@
                     <span class="stat-label">Lifespan:</span>
                     <span class="stat-value">${animal.lifespan}</span>
                 </div>
+                <div class="stat">
+                    <span class="stat-label">Empathy Scale:</span>
+                    <span class="stat-value">${getEmpathyDisplay(animal.empathy)}</span>
+                </div>
             `;
             
             tooltip.style.display = 'block';
             
-            // Calculate tooltip position relative to the animal dot
             let tooltipRect = tooltip.getBoundingClientRect();
             let baseSize = animal.displaySize || animal.size;
             
-            // Position tooltip with coordinates passed in (works for both mouse and touch)
             let spacing = 12;
             let dotRadius = (baseSize + (animal.intensity * baseSize * 0.6)) / 2;
             
-            // Use provided coordinates or fall back to animal position
             let posX = x !== undefined ? x : animal.x;
             let posY = y !== undefined ? y : animal.y;
             
-            // Try positioning tooltip to the right first
             let tooltipX = posX + dotRadius + spacing;
             let tooltipY = posY - tooltipRect.height / 2;
             
-            // Check if tooltip goes off the right edge of screen
             if (tooltipX + tooltipRect.width > window.innerWidth - 10) {
-                // Position to the left instead
                 tooltipX = posX - dotRadius - spacing - tooltipRect.width;
             }
             
-            // Check if tooltip goes off the left edge
             if (tooltipX < 10) {
-                // Position above or below instead
                 tooltipX = posX - tooltipRect.width / 2;
                 
-                // Try above first
                 tooltipY = posY - dotRadius - spacing - tooltipRect.height;
                 
-                // If above goes off screen, position below
                 if (tooltipY < 10) {
                     tooltipY = posY + dotRadius + spacing;
                 }
             }
             
-            // Final boundary checks
             tooltipX = Math.max(10, Math.min(tooltipX, window.innerWidth - tooltipRect.width - 10));
             tooltipY = Math.max(10, Math.min(tooltipY, window.innerHeight - tooltipRect.height - 10));
             
@@ -1186,10 +1243,17 @@
             }
         }
         
+        function showInfoModal() {
+            document.getElementById('infoModal').style.display = 'flex';
+        }
+        
+        function closeInfoModal() {
+            document.getElementById('infoModal').style.display = 'none';
+        }
+        
         function closeIntroModal() {
             document.getElementById('introModal').style.display = 'none';
             
-            // Enable audio after user interaction
             if (audioContext && audioContext.state === 'suspended') {
                 audioContext.resume().then(() => {
                     isAudioEnabled = true;
@@ -1201,15 +1265,12 @@
             let animalName = prompt("What animal would you like to see added?\n\nPlease enter the animal name:");
             
             if (animalName && animalName.trim() !== '') {
-                // Create mailto link
                 let subject = encodeURIComponent("Animal Request for Heartbeat Database");
                 let body = encodeURIComponent(`Hello!\n\nI would like to request adding the following animal to the Animal Heartbeat Database:\n\nAnimal: ${animalName.trim()}\n\nThanks!`);
                 let mailtoLink = `mailto:your-email@example.com?subject=${subject}&body=${body}`;
                 
-                // Open email client
                 window.location.href = mailtoLink;
                 
-                // Show confirmation
                 alert(`Thank you! Your request for "${animalName.trim()}" will be sent via email.`);
             }
         }
@@ -1223,17 +1284,13 @@
         }
         
         function exportScreenshot() {
-            // Temporarily enable clean view for export
             let originalCleanView = cleanView;
             cleanView = true;
             
-            // Redraw one frame with clean view
             draw();
             
-            // Save the canvas
             saveCanvas('rhythms-of-life-heartbeats', 'png');
             
-            // Restore original clean view setting
             cleanView = originalCleanView;
             
             closeExportModal();
@@ -1242,26 +1299,23 @@
         function copyLink() {
             const currentUrl = window.location.href;
             
-            // Copy to clipboard
             navigator.clipboard.writeText(currentUrl).then(() => {
                 alert('Link copied to clipboard! 📋✨');
                 closeExportModal();
             }).catch(() => {
-                // Fallback for older browsers
                 prompt('Copy this link:', currentUrl);
                 closeExportModal();
             });
         }
         
         function pledgeToProtect() {
-            // Open PETA website in a new tab
             window.open('https://www.peta.org/', '_blank');
             closeExportModal();
         }
         
         function handleResize() {
             canvasWidth = window.innerWidth;
-            canvasHeight = window.innerWidth < 768 ? window.innerHeight - 120 : window.innerHeight - 200; // Less space reserved on mobile
+            canvasHeight = window.innerWidth < 768 ? window.innerHeight - 120 : window.innerHeight - 200;
             resizeCanvas(canvasWidth, canvasHeight);
             updateDisplay();
         }
@@ -1272,31 +1326,25 @@
         }
         
         function handleSort() {
-            // Handle both native select and custom select
             let sortValue;
             if (document.getElementById('sortSelect').classList) {
-                // Custom select - get from data attribute of selected option
                 const selectedOption = document.querySelector('.option.selected');
                 sortValue = selectedOption ? selectedOption.dataset.value : 'alphabetical';
             } else {
-                // Native select fallback
                 sortValue = document.getElementById('sortSelect').value;
             }
             currentSort = sortValue;
             updateDisplay();
         }
         
-        // Custom dropdown functionality
         document.addEventListener('DOMContentLoaded', function() {
             const customSelect = document.getElementById('sortSelect');
             const trigger = customSelect.querySelector('.select-trigger');
             const options = customSelect.querySelectorAll('.option');
             
-            // Create dropdown in body to avoid clipping
             const dropdown = customSelect.querySelector('.select-options');
             document.body.appendChild(dropdown);
             
-            // Toggle dropdown
             trigger.addEventListener('click', function(e) {
                 e.stopPropagation();
                 
@@ -1304,7 +1352,6 @@
                     dropdown.style.display = 'none';
                     customSelect.classList.remove('open');
                 } else {
-                    // Position dropdown correctly when opened
                     const rect = trigger.getBoundingClientRect();
                     dropdown.style.display = 'block';
                     dropdown.style.top = (rect.bottom + window.scrollY + 2) + 'px';
@@ -1314,33 +1361,26 @@
                 }
             });
             
-            // Handle option selection
             options.forEach(option => {
                 option.addEventListener('click', function() {
-                    // Update trigger text
                     trigger.querySelector('span').textContent = this.textContent;
                     
-                    // Mark as selected
                     options.forEach(opt => opt.classList.remove('selected'));
                     this.classList.add('selected');
                     
-                    // Close dropdown
                     dropdown.style.display = 'none';
                     customSelect.classList.remove('open');
                     
-                    // Update sorting
                     currentSort = this.dataset.value;
                     updateDisplay();
                 });
             });
             
-            // Close on outside click
             document.addEventListener('click', function() {
                 dropdown.style.display = 'none';
                 customSelect.classList.remove('open');
             });
             
-            // Set initial selection
             options[0].classList.add('selected');
         });
         
@@ -1358,7 +1398,6 @@
             return t * t * t * t;
         }
         
-        // Keyboard shortcuts
         document.addEventListener('keydown', function(event) {
             if (event.key === 'c' || event.key === 'C') {
                 toggleCleanView();
@@ -1369,11 +1408,11 @@
             } else if (event.key === 'Escape') {
                 closeExportModal();
                 closeIntroModal();
+                closeInfoModal();
                 hideTooltip();
             }
         });
         
-        // Close modal when clicking outside
         document.getElementById('exportModal').addEventListener('click', function(event) {
             if (event.target === this) {
                 closeExportModal();
@@ -1383,6 +1422,12 @@
         document.getElementById('introModal').addEventListener('click', function(event) {
             if (event.target === this) {
                 closeIntroModal();
+            }
+        });
+        
+        document.getElementById('infoModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeInfoModal();
             }
         });
     </script>
