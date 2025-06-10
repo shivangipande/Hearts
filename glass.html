@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Apple Liquid Glass Button</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apple Liquid Glass Button (Optimized)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     body {
@@ -28,7 +28,7 @@ function preload() {
 }
 
 function setup() {
-  pixelDensity(2);
+  pixelDensity(window.devicePixelRatio > 2 ? 1.5 : 1);
   createCanvas(windowWidth, windowHeight);
   buttonX = width / 2;
   buttonY = height / 2;
@@ -46,12 +46,12 @@ function drawGlass(x, y) {
 
   // Shadow
   ctx.save();
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-  ctx.shadowBlur = 12;
-  ctx.shadowOffsetX = 6;
-  ctx.shadowOffsetY = 8;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetX = 4;
+  ctx.shadowOffsetY = 6;
   stroke(0, 0, 0, 40);
-  strokeWeight(3);
+  strokeWeight(2);
   noFill();
   circle(x, y, size);
   ctx.restore();
@@ -63,14 +63,14 @@ function drawGlass(x, y) {
   ctx.arc(x, y, radius, 0, TWO_PI);
   ctx.clip();
 
-  // Blur layer
-  ctx.filter = 'blur(12px) saturate(1.15) brightness(1.05)';
+  // Apply blur
+  ctx.filter = 'blur(10px) saturate(1.1) brightness(1.04)';
   image(bgSample, x - radius - 40, y - radius - 40);
   ctx.filter = 'none';
 
-  // Barrel distortion
-  for (let px = 0; px < size; px += 1) {
-    for (let py = 0; py < size; py += 1) {
+  // Barrel distortion (low resolution for performance)
+  for (let px = 0; px < size; px += 2) {
+    for (let py = 0; py < size; py += 2) {
       let centerX = size / 2;
       let centerY = size / 2;
       let distFromCenter = dist(px, py, centerX, centerY);
@@ -85,47 +85,44 @@ function drawGlass(x, y) {
         sourceX = constrain(sourceX, 0, bgSample.width - 1);
         sourceY = constrain(sourceY, 0, bgSample.height - 1);
         let baseColor = bgSample.get(sourceX, sourceY);
-        fill(red(baseColor), green(baseColor), blue(baseColor), 180);
+        fill(red(baseColor), green(baseColor), blue(baseColor), 170);
         noStroke();
-        rect(x - radius + px, y - radius + py, 1, 1);
+        rect(x - radius + px, y - radius + py, 2, 2);
       }
     }
   }
 
   ctx.restore();
 
-  // Texture noise
-  for (let i = 0; i < 40; i++) {
+  // Sparkle noise
+  for (let i = 0; i < 20; i++) {
     let angle = random(TWO_PI);
     let r = random(radius);
     let nx = x + cos(angle) * r;
     let ny = y + sin(angle) * r;
-    fill(255, 255, 255, random(2, 8));
+    fill(255, 255, 255, random(3, 10));
     noStroke();
-    circle(nx, ny, random(0.2, 1));
+    circle(nx, ny, random(0.5, 1.2));
   }
 
-  // Edge glow
-  let mouseAngle = atan2(mouseY - y, mouseX - x);
-  drawCircleSpectralEdge(x, y, radius, mouseAngle);
-
-  stroke(255, 255, 255, 60);
+  // Edge highlight
+  drawCircleEdge(x, y, radius);
+  stroke(255, 255, 255, 50);
   strokeWeight(0.5);
   noFill();
   circle(x, y, size);
 }
 
-function drawCircleSpectralEdge(cx, cy, radius, angle) {
+function drawCircleEdge(cx, cy, radius) {
   let ctx = drawingContext;
+  let angle = atan2(mouseY - cy, mouseX - cx);
   let gx1 = cx + cos(angle) * 120;
   let gy1 = cy + sin(angle) * 120;
   let gx2 = cx + cos(angle + PI) * 120;
   let gy2 = cy + sin(angle + PI) * 120;
   let spectral = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
   spectral.addColorStop(0, 'rgba(255, 150, 255, 0)');
-  spectral.addColorStop(0.4, 'rgba(255, 200, 255, 0.3)');
-  spectral.addColorStop(0.5, 'rgba(255, 255, 255, 0.6)');
-  spectral.addColorStop(0.6, 'rgba(200, 255, 255, 0.3)');
+  spectral.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
   spectral.addColorStop(1, 'rgba(150, 255, 255, 0)');
   ctx.strokeStyle = spectral;
   ctx.lineWidth = 2;
