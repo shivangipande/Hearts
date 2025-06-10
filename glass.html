@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Himbo Glass with Real SF Pro</title>
+  <meta charset="UTF-8" />
+  <title>Apple Himbo Glass (No Server Needed)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -10,6 +10,7 @@
       padding: 0;
       overflow: hidden;
       background: black;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
     }
     canvas {
       display: block;
@@ -24,18 +25,16 @@ let offsetX = 0, offsetY = 0;
 let bgImg, distortionSize;
 let blurBuffer, distorted;
 let poeticLine = "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical — a tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.";
-let sfFont;
 let bgLoaded = false;
 
 function preload() {
   bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=1200&auto=format&fit=crop");
-  sfFont = loadFont("SF-Pro-Display-Bold.otf"); // Use uploaded font
 }
 
 function setup() {
   pixelDensity(1.5);
   createCanvas(windowWidth, windowHeight);
-  textFont(sfFont);
+  textFont("-apple-system");
   textSize(80);
   textAlign(CENTER, CENTER);
 
@@ -44,7 +43,7 @@ function setup() {
   distortionSize = min(width, height) * 0.4;
 
   blurBuffer = createGraphics(width, height);
-  blurBuffer.textFont(sfFont);
+  blurBuffer.textFont("-apple-system");
   blurBuffer.textSize(80);
   blurBuffer.textAlign(CENTER, CENTER);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
@@ -66,7 +65,7 @@ function drawBlurBuffer() {
   blurBuffer.fill(255, 235);
   blurBuffer.noStroke();
   blurBuffer.textLeading(95);
-  blurBuffer.text(poeticLine, width / 2, height / 2, width * 0.85); // Centered
+  blurBuffer.text(poeticLine, width / 2, height / 2, width * 0.85);
   blurBuffer.filter(BLUR, 2.5);
 }
 
@@ -159,7 +158,7 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   distortionSize = min(width, height) * 0.4;
   blurBuffer = createGraphics(width, height);
-  blurBuffer.textFont(sfFont);
+  blurBuffer.textFont("-apple-system");
   blurBuffer.textSize(80);
   blurBuffer.textAlign(CENTER, CENTER);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
