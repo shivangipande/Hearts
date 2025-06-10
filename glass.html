@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Apple Glass Barrel + Gyro</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apple Liquid Glass Button</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
-    html, body {
+    body {
       margin: 0;
       padding: 0;
       overflow: hidden;
@@ -18,14 +18,13 @@
 </head>
 <body>
 <script>
-let macBackground;
 let buttonX, buttonY;
 let isDragging = false;
 let offsetX, offsetY;
-let gyroAngle = 0;
+let backgroundImage;
 
 function preload() {
-  macBackground = loadImage('https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+  backgroundImage = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
 }
 
 function setup() {
@@ -33,140 +32,128 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   buttonX = width / 2;
   buttonY = height / 2;
-
-  if (window.DeviceOrientationEvent) {
-    window.addEventListener('deviceorientation', (e) => {
-      let gamma = e.gamma || 0;
-      let beta = e.beta || 0;
-      gyroAngle = atan2(beta, gamma); // map tilt to angle
-    });
-  }
 }
 
 function draw() {
-  background(240);
-  image(macBackground, 0, 0, width, height);
+  image(backgroundImage, 0, 0, width, height);
   drawGlass(buttonX, buttonY);
 }
 
 function drawGlass(x, y) {
-  let baseSize = min(windowWidth, windowHeight) * 0.4;
-  let size = constrain(baseSize, 140, 240);
+  let size = min(width, height) * 0.4;
   let radius = size / 2;
-
-  // Get region under glass
-  let bg = macBackground.get(x - radius, y - radius, size, size);
-  bg.loadPixels();
-
   let ctx = drawingContext;
+
+  // Shadow
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetX = 6;
+  ctx.shadowOffsetY = 8;
+  stroke(0, 0, 0, 40);
+  strokeWeight(3);
+  noFill();
+  circle(x, y, size);
+  ctx.restore();
+
+  let bgSample = get(x - radius - 40, y - radius - 40, size + 80, size + 80);
+
   ctx.save();
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, TWO_PI);
   ctx.clip();
 
   // Blur layer
-  ctx.filter = 'blur(8px) saturate(1.05)';
-  ctx.globalAlpha = 0.4;
-  image(bg, x - radius, y - radius);
+  ctx.filter = 'blur(12px) saturate(1.15) brightness(1.05)';
+  image(bgSample, x - radius - 40, y - radius - 40);
   ctx.filter = 'none';
-  ctx.globalAlpha = 1.0;
 
-  // Barrel distortion layer
-  let step = windowWidth < 600 ? 1.2 : 0.8;
-  let cx = size / 2;
-  let cy = size / 2;
-
-  for (let px = 0; px < size; px += step) {
-    for (let py = 0; py < size; py += step) {
-      let dx = px - cx;
-      let dy = py - cy;
-      let d = sqrt(dx * dx + dy * dy);
-      if (d <= radius) {
-        let nd = d / radius;
-        let distortion = 1 + 0.35 * nd * nd;
-        let sd = d / distortion;
-        let angle = atan2(dy, dx);
-        let sx = cx + cos(angle) * sd;
-        let sy = cy + sin(angle) * sd;
-        let sxInt = floor(sx);
-        let syInt = floor(sy);
-        let index = 4 * (sxInt + syInt * bg.width);
-
-        let r = bg.pixels[index] || 255;
-        let g = bg.pixels[index + 1] || 255;
-        let b = bg.pixels[index + 2] || 255;
-
-        if (nd > 0.9 && windowWidth > 600) {
-          let offset = (nd - 0.9) * 0.05;
-          let ri = 4 * (constrain(floor(sx + offset), 0, bg.width - 1) + syInt * bg.width);
-          let bi = 4 * (constrain(floor(sx - offset), 0, bg.width - 1) + syInt * bg.width);
-          r = bg.pixels[ri] || r;
-          b = bg.pixels[bi + 2] || b;
-        }
-
-        fill(r, g, b, 160);
+  // Barrel distortion
+  for (let px = 0; px < size; px += 1) {
+    for (let py = 0; py < size; py += 1) {
+      let centerX = size / 2;
+      let centerY = size / 2;
+      let distFromCenter = dist(px, py, centerX, centerY);
+      if (distFromCenter <= radius) {
+        let normalizedDist = distFromCenter / radius;
+        let k1 = 0.2;
+        let distortion = 1 + k1 * normalizedDist * normalizedDist;
+        let angleToCenter = atan2(py - centerY, px - centerX);
+        let sourceDistance = distFromCenter / distortion;
+        let sourceX = centerX + cos(angleToCenter) * sourceDistance + 40;
+        let sourceY = centerY + sin(angleToCenter) * sourceDistance + 40;
+        sourceX = constrain(sourceX, 0, bgSample.width - 1);
+        sourceY = constrain(sourceY, 0, bgSample.height - 1);
+        let baseColor = bgSample.get(sourceX, sourceY);
+        fill(red(baseColor), green(baseColor), blue(baseColor), 180);
         noStroke();
-        rect(x - radius + px, y - radius + py, step, step);
+        rect(x - radius + px, y - radius + py, 1, 1);
       }
     }
   }
 
   ctx.restore();
 
-  // Spectral edge: desktop = mouse, mobile = gyro
-  let spectralAngle = (windowWidth < 600) ? gyroAngle : atan2(mouseY - y, mouseX - x);
-  drawCircleSpectralEdge(x, y, radius, spectralAngle);
+  // Texture noise
+  for (let i = 0; i < 40; i++) {
+    let angle = random(TWO_PI);
+    let r = random(radius);
+    let nx = x + cos(angle) * r;
+    let ny = y + sin(angle) * r;
+    fill(255, 255, 255, random(2, 8));
+    noStroke();
+    circle(nx, ny, random(0.2, 1));
+  }
 
-  // Clean edge
+  // Edge glow
+  let mouseAngle = atan2(mouseY - y, mouseX - x);
+  drawCircleSpectralEdge(x, y, radius, mouseAngle);
+
   stroke(255, 255, 255, 60);
   strokeWeight(0.5);
   noFill();
   circle(x, y, size);
 }
 
-function drawCircleSpectralEdge(cx, cy, r, angle) {
+function drawCircleSpectralEdge(cx, cy, radius, angle) {
   let ctx = drawingContext;
   let gx1 = cx + cos(angle) * 120;
   let gy1 = cy + sin(angle) * 120;
   let gx2 = cx + cos(angle + PI) * 120;
   let gy2 = cy + sin(angle + PI) * 120;
-
-  let grad = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
-  grad.addColorStop(0, 'rgba(255,150,255,0)');
-  grad.addColorStop(0.4, 'rgba(255,200,255,0.3)');
-  grad.addColorStop(0.5, 'rgba(255,255,255,0.6)');
-  grad.addColorStop(0.6, 'rgba(200,255,255,0.3)');
-  grad.addColorStop(1, 'rgba(150,255,255,0)');
-
-  ctx.strokeStyle = grad;
+  let spectral = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
+  spectral.addColorStop(0, 'rgba(255, 150, 255, 0)');
+  spectral.addColorStop(0.4, 'rgba(255, 200, 255, 0.3)');
+  spectral.addColorStop(0.5, 'rgba(255, 255, 255, 0.6)');
+  spectral.addColorStop(0.6, 'rgba(200, 255, 255, 0.3)');
+  spectral.addColorStop(1, 'rgba(150, 255, 255, 0)');
+  ctx.strokeStyle = spectral;
   ctx.lineWidth = 2;
   ctx.filter = 'blur(1px)';
   ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, TWO_PI);
+  ctx.arc(cx, cy, radius, 0, TWO_PI);
   ctx.stroke();
   ctx.filter = 'none';
 }
 
 function mousePressed() {
-  let size = constrain(min(windowWidth, windowHeight) * 0.4, 140, 240);
+  let size = min(width, height) * 0.4;
   if (dist(mouseX, mouseY, buttonX, buttonY) < size / 2) {
     isDragging = true;
     offsetX = mouseX - buttonX;
     offsetY = mouseY - buttonY;
-    document.body.style.cursor = 'grabbing';
   }
 }
 
 function mouseDragged() {
   if (isDragging) {
-    buttonX = constrain(mouseX - offsetX, 80, width - 80);
-    buttonY = constrain(mouseY - offsetY, 80, height - 80);
+    buttonX = constrain(mouseX - offsetX, 100, width - 100);
+    buttonY = constrain(mouseY - offsetY, 100, height - 100);
   }
 }
 
 function mouseReleased() {
   isDragging = false;
-  document.body.style.cursor = 'default';
 }
 
 function windowResized() {
