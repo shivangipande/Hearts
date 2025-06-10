@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Glass Effect with Centered, Responsive Text</title>
+  <title>Glass Effect with True Centered Text</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -52,19 +52,40 @@ function updateBlurBuffer() {
   blurBuffer.clear();
   blurBuffer.image(bgImg, 0, 0, width, height);
 
-  // Draw centered text into the blur buffer (so it gets blurred under glass)
-  blurBuffer.push();
-  blurBuffer.textAlign(CENTER, CENTER);
-  blurBuffer.textSize(min(width, height) * 0.05);
-  blurBuffer.textFont('system-ui');
-  blurBuffer.fill(255);
-  let margin = width * 0.1;
-  let boxWidth = width - margin * 2;
-  let boxHeight = height * 0.8;
-  blurBuffer.text(mainText, width/2, height/2, boxWidth, boxHeight);
-  blurBuffer.pop();
-
+  // Draw true centered text into the blur buffer
+  drawCenteredText(blurBuffer, mainText, width/2, height/2, min(width, height) * 0.05, width * 0.8);
   blurBuffer.filter(BLUR, 2.5);
+}
+
+function drawCenteredText(gfx, txt, x, y, fontSize, maxWidth) {
+  gfx.push();
+  gfx.textAlign(CENTER, CENTER);
+  gfx.textSize(fontSize);
+  gfx.textFont('system-ui');
+  gfx.fill(255);
+
+  let words = txt.split(' ');
+  let lines = [''];
+  let currentLine = 0;
+
+  for (let i = 0; i < words.length; i++) {
+    let testLine = lines[currentLine] + words[i] + ' ';
+    if (gfx.textWidth(testLine) < maxWidth) {
+      lines[currentLine] = testLine;
+    } else {
+      currentLine++;
+      lines[currentLine] = words[i] + ' ';
+    }
+  }
+
+  let lineHeight = fontSize * 1.2;
+  let totalHeight = lines.length * lineHeight;
+  let startY = y - (totalHeight / 2) + (lineHeight / 2);
+
+  for (let i = 0; i < lines.length; i++) {
+    gfx.text(lines[i].trim(), x, startY + i * lineHeight);
+  }
+  gfx.pop();
 }
 
 function draw() {
@@ -80,19 +101,8 @@ function draw() {
   // Draw background image
   image(bgImg, 0, 0, width, height);
 
-  // Draw crisp, centered text on main canvas
-  push();
-  textAlign(CENTER, CENTER);
-  textSize(min(width, height) * 0.05);
-  textFont('system-ui');
-  fill(255);
-  let margin = width * 0.1;
-  let boxWidth = width - margin * 2;
-  let boxHeight = height * 0.8;
-  // Optional: Adjust y position if still not visually centered
-  let yOffset = -min(width, height) * 0.05 / 12;
-  text(mainText, width/2, height/2 + yOffset, boxWidth, boxHeight);
-  pop();
+  // Draw true centered text on main canvas
+  drawCenteredText(this, mainText, width/2, height/2, min(width, height) * 0.05, width * 0.8);
 
   // Draw glass button (samples from blurred buffer, which includes blurred text)
   drawGlass(buttonX, buttonY);
@@ -198,4 +208,3 @@ function windowResized() {
 </script>
 </body>
 </html>
-
