@@ -19,14 +19,12 @@
     }
     canvas {
       display: block;
-      z-index: 1;
       touch-action: none;
     }
   </style>
 </head>
 <body>
   <div id="canvas-container"></div>
-  <noscript>Please enable JavaScript to view this page.</noscript>
   <script>
     let buttonX, buttonY;
     let isDragging = false;
@@ -38,7 +36,6 @@
       c.parent('canvas-container');
       buttonX = width / 2;
       buttonY = height / 2;
-      background(30, 60, 114);
     }
 
     function draw() {
@@ -62,36 +59,27 @@
 
       fill(255, 255, 255, 200);
       textAlign(CENTER, CENTER);
-      textSize(48);
-      text('APPLE', width / 2 - 150, height / 2 - 100);
-      text('GLASS', width / 2 + 150, height / 2 - 50);
-
       textSize(32);
-      text('Liquid Glass', width / 2, height / 2 + 80);
-
+      text('Liquid Glass', width / 2, height / 2 + 100);
       textSize(24);
       fill(255, 255, 255, 150);
-      text('Drag to see blur effect', width / 2, height / 2 + 120);
-
-      textSize(28);
-      fill(255, 255, 255, 180);
-      text('1234567890', width / 2 - 100, height / 2 - 20);
-      text('ABCDEFGHIJ', width / 2 + 100, height / 2 + 20);
+      text('Drag to see blur & distortion', width / 2, height / 2 + 140);
     }
 
-    // drawGlass with both distortion + blur
+    // drawGlass with mobile optimizations
     function drawGlass(x, y) {
-      let size = 200;
+      let baseSize = min(windowWidth, windowHeight) * 0.4;
+      let size = constrain(baseSize, 140, 240);
       let radius = size / 2;
-      let bg = get(x - size / 2 - 40, y - size / 2 - 40, size + 80, size + 80);
+      let bg = get(x - radius, y - radius, size, size);
 
       drawingContext.save();
-      drawingContext.shadowColor = 'rgba(0,0,0,0.3)';
-      drawingContext.shadowBlur = 12;
-      drawingContext.shadowOffsetX = 6;
-      drawingContext.shadowOffsetY = 8;
+      drawingContext.shadowColor = 'rgba(0,0,0,0.25)';
+      drawingContext.shadowBlur = 10;
+      drawingContext.shadowOffsetX = 4;
+      drawingContext.shadowOffsetY = 6;
       stroke(0, 0, 0, 40);
-      strokeWeight(3);
+      strokeWeight(2);
       noFill();
       circle(x, y, size);
       drawingContext.restore();
@@ -102,30 +90,25 @@
       ctx.arc(x, y, radius, 0, TWO_PI);
       ctx.clip();
 
-      // Draw blurred background base layer
-      for (let i = 0; i < 4; i++) {
-        ctx.filter = `blur(${4 + i * 1.5}px) saturate(1.1)`;
-        ctx.globalAlpha = 0.2;
-        image(bg, x - size / 2 - 40, y - size / 2 - 40);
-      }
-
+      ctx.filter = 'blur(10px) saturate(1.1)';
+      ctx.globalAlpha = 0.35;
+      image(bg, x - radius, y - radius);
       ctx.filter = 'none';
       ctx.globalAlpha = 1.0;
 
-      // Overlay distortion
-      let step = 1;
+      let step = windowWidth < 600 ? 2 : 1;
       for (let px = 0; px < size; px += step) {
         for (let py = 0; py < size; py += step) {
           let cx = size / 2, cy = size / 2;
           let d = dist(px, py, cx, cy);
           if (d <= radius) {
             let nd = d / radius;
-            let k1 = 0.4;
+            let k1 = 0.35;
             let distortion = 1 + k1 * nd * nd;
             let angle = atan2(py - cy, px - cx);
             let sd = d / distortion;
-            let sx = cx + cos(angle) * sd + 40;
-            let sy = cy + sin(angle) * sd + 40;
+            let sx = cx + cos(angle) * sd;
+            let sy = cy + sin(angle) * sd;
             sx = constrain(sx, 0, bg.width - 1);
             sy = constrain(sy, 0, bg.height - 1);
             let c = bg.get(sx, sy);
@@ -134,27 +117,27 @@
               let ab = (nd - 0.85) * 0.2;
               let rc = bg.get(constrain(sx + ab, 0, bg.width - 1), sy);
               let bc = bg.get(constrain(sx - ab, 0, bg.width - 1), sy);
-              fill(red(rc), green(c), blue(bc), 180);
+              fill(red(rc), green(c), blue(bc), 160);
             } else {
-              fill(...c, 180);
+              fill(...c, 160);
             }
 
             noStroke();
-            rect(x - size / 2 + px, y - size / 2 + py, step, step);
+            rect(x - radius + px, y - radius + py, step, step);
           }
         }
       }
 
       ctx.restore();
 
-      for (let i = 0; i < 30; i++) {
+      for (let i = 0; i < 20; i++) {
         let angle = random(TWO_PI);
         let r = random(radius);
         let nx = x + cos(angle) * r;
         let ny = y + sin(angle) * r;
-        fill(255, 255, 255, random(4, 10));
+        fill(255, 255, 255, random(3, 8));
         noStroke();
-        circle(nx, ny, random(0.2, 0.8));
+        circle(nx, ny, random(0.2, 0.7));
       }
 
       let mouseAngle = atan2(mouseY - y, mouseX - x);
@@ -190,7 +173,7 @@
     }
 
     function mousePressed() {
-      let size = 200;
+      let size = constrain(min(windowWidth, windowHeight) * 0.4, 140, 240);
       if (dist(mouseX, mouseY, buttonX, buttonY) < size / 2) {
         isDragging = true;
         offsetX = mouseX - buttonX;
