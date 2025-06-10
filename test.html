@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apple Liquid Glass Button (Optimized)</title>
+  <title>Apple Liquid Glass Button (Glass Over Text)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -22,16 +22,16 @@ let buttonX, buttonY;
 let isDragging = false;
 let offsetX = 0, offsetY = 0;
 let bgImg;
-let gyroAngle = 0;
 let distortionSize;
 let blurBuffer;
 let distorted;
 let bgReady = false;
+const mainText = "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical. A tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.";
 
 function preload() {
   bgImg = loadImage(
-    "https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=1200&auto=format&fit=crop"
-    , () => { bgReady = true; }
+    "https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=1200&auto=format&fit=crop",
+    () => { bgReady = true; }
   );
 }
 
@@ -43,24 +43,26 @@ function setup() {
   distortionSize = min(width, height) * 0.4;
   blurBuffer = createGraphics(width, height);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
-  if (bgReady) {
-    blurBuffer.image(bgImg, 0, 0, width, height);
-    blurBuffer.filter(BLUR, 2.5);
-  }
-
-  if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
-    DeviceOrientationEvent.requestPermission().then(response => {
-      if (response === 'granted') {
-        window.addEventListener('deviceorientation', handleGyro);
-      }
-    });
-  } else {
-    window.addEventListener('deviceorientation', handleGyro);
-  }
+  updateBlurBuffer();
 }
 
-function handleGyro(e) {
-  gyroAngle = radians(e.gamma || 0);
+function updateBlurBuffer() {
+  if (!bgReady) return;
+  blurBuffer.clear();
+  blurBuffer.image(bgImg, 0, 0, width, height);
+
+  // Draw the centered text into the blur buffer (so it gets blurred under glass)
+  blurBuffer.push();
+  blurBuffer.textAlign(CENTER, CENTER);
+  blurBuffer.textSize(80);
+  blurBuffer.textFont('system-ui');
+  blurBuffer.fill(255);
+  let margin = 80;
+  let boxWidth = width - margin * 2;
+  blurBuffer.text(mainText, width/2, height/2, boxWidth, height);
+  blurBuffer.pop();
+
+  blurBuffer.filter(BLUR, 2.5);
 }
 
 function draw() {
@@ -73,22 +75,22 @@ function draw() {
     return;
   }
 
+  // Draw original background image
   image(bgImg, 0, 0, width, height);
 
-  // Draw Apple-style center-aligned text as part of background
+  // Draw the glass button (samples from the blurred buffer, which includes the blurred text)
+  drawGlass(buttonX, buttonY);
+
+  // Draw crisp centered text on top
   push();
   textAlign(CENTER, CENTER);
   textSize(80);
-  textFont('system-ui'); // Uses SF Pro on Apple devices, fallback elsewhere
+  textFont('system-ui');
   fill(255);
-  // Use textWidth to wrap lines if needed
-  let txt = "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical. A tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.";
   let margin = 80;
   let boxWidth = width - margin * 2;
-  text(txt, width/2, height/2, boxWidth, height);
+  text(mainText, width/2, height/2, boxWidth, height);
   pop();
-
-  drawGlass(buttonX, buttonY);
 }
 
 function drawGlass(x, y) {
@@ -186,10 +188,7 @@ function windowResized() {
   distortionSize = min(width, height) * 0.4;
   blurBuffer = createGraphics(width, height);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
-  if (bgReady) {
-    blurBuffer.image(bgImg, 0, 0, width, height);
-    blurBuffer.filter(BLUR, 2.5);
-  }
+  updateBlurBuffer();
 }
 </script>
 </body>
