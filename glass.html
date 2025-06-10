@@ -24,7 +24,6 @@
   </style>
 </head>
 <body>
-  <div id="canvas-container"></div>
   <script>
     let buttonX, buttonY;
     let isDragging = false;
@@ -32,8 +31,7 @@
 
     function setup() {
       pixelDensity(2);
-      let c = createCanvas(windowWidth, windowHeight);
-      c.parent('canvas-container');
+      createCanvas(windowWidth, windowHeight);
       buttonX = width / 2;
       buttonY = height / 2;
     }
@@ -66,12 +64,15 @@
       text('Drag to see blur & distortion', width / 2, height / 2 + 140);
     }
 
-    // drawGlass with mobile optimizations
+    // --- Latest Optimized drawGlass Function ---
     function drawGlass(x, y) {
       let baseSize = min(windowWidth, windowHeight) * 0.4;
       let size = constrain(baseSize, 140, 240);
       let radius = size / 2;
-      let bg = get(x - radius, y - radius, size, size);
+
+      let captureMargin = 40;
+      let captureSize = size + captureMargin * 2;
+      let bg = get(x - captureSize / 2, y - captureSize / 2, captureSize, captureSize);
 
       drawingContext.save();
       drawingContext.shadowColor = 'rgba(0,0,0,0.25)';
@@ -92,14 +93,15 @@
 
       ctx.filter = 'blur(10px) saturate(1.1)';
       ctx.globalAlpha = 0.35;
-      image(bg, x - radius, y - radius);
+      image(bg, x - captureSize / 2, y - captureSize / 2);
       ctx.filter = 'none';
       ctx.globalAlpha = 1.0;
 
       let step = windowWidth < 600 ? 2 : 1;
       for (let px = 0; px < size; px += step) {
         for (let py = 0; py < size; py += step) {
-          let cx = size / 2, cy = size / 2;
+          let cx = size / 2;
+          let cy = size / 2;
           let d = dist(px, py, cx, cy);
           if (d <= radius) {
             let nd = d / radius;
@@ -107,14 +109,14 @@
             let distortion = 1 + k1 * nd * nd;
             let angle = atan2(py - cy, px - cx);
             let sd = d / distortion;
-            let sx = cx + cos(angle) * sd;
-            let sy = cy + sin(angle) * sd;
+            let sx = cx + cos(angle) * sd + captureMargin;
+            let sy = cy + sin(angle) * sd + captureMargin;
             sx = constrain(sx, 0, bg.width - 1);
             sy = constrain(sy, 0, bg.height - 1);
             let c = bg.get(sx, sy);
 
-            if (nd > 0.85) {
-              let ab = (nd - 0.85) * 0.2;
+            if (nd > 0.9 && windowWidth > 600) {
+              let ab = (nd - 0.9) * 0.1;
               let rc = bg.get(constrain(sx + ab, 0, bg.width - 1), sy);
               let bc = bg.get(constrain(sx - ab, 0, bg.width - 1), sy);
               fill(red(rc), green(c), blue(bc), 160);
