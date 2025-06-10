@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apple Liquid Glass Button (Optimized)</title>
+  <title>Apple Liquid Glass Button (Optimized & Shimmering)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -18,7 +18,7 @@
 </head>
 <body>
 <script>
-p5.disableFriendlyErrors = true; // Speeds up p5.js sketches
+p5.disableFriendlyErrors = true;
 
 let buttonX, buttonY;
 let isDragging = false;
@@ -27,6 +27,7 @@ let bgImg;
 let gyroAngle = 0;
 let distortionSize;
 let blurBuffer;
+let time = 0;
 
 function preload() {
   bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
@@ -40,7 +41,7 @@ function setup() {
   distortionSize = Math.min(width, height) * 0.4;
   blurBuffer = createGraphics(width, height);
   blurBuffer.image(bgImg, 0, 0, width, height);
-  blurBuffer.filter(BLUR, 3); // Only blur once here
+  blurBuffer.filter(BLUR, 3);
 
   // Device orientation for highlight tilt
   if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
@@ -59,14 +60,14 @@ function handleGyro(e) {
 }
 
 function draw() {
-  image(bgImg, 0, 0, width, height); // Draw original background
-  drawGlass(buttonX, buttonY); // Draw glass effect
+  image(bgImg, 0, 0, width, height);
+  drawGlass(buttonX, buttonY);
+  time += 0.05; // For shimmer effect
 }
 
 function drawGlass(x, y) {
   let r = distortionSize / 2;
   let d = Math.floor(distortionSize);
-  // Only get the region around the button
   let buffer = blurBuffer.get(x - r, y - r, d, d);
 
   buffer.loadPixels();
@@ -114,10 +115,24 @@ function drawGlass(x, y) {
 
 function drawCircleEdge(cx, cy, radius) {
   let ctx = drawingContext;
-  let gx1 = cx + Math.cos(gyroAngle) * 120;
-  let gy1 = cy + Math.sin(gyroAngle) * 120;
-  let gx2 = cx + Math.cos(gyroAngle + PI) * 120;
-  let gy2 = cy + Math.sin(gyroAngle + PI) * 120;
+  let highlightAngle;
+
+  // Use cursor angle if mouse is over, otherwise gyro angle
+  if (mouseX > 0 && mouseY > 0 && dist(mouseX, mouseY, cx, cy) < radius * 1.5) {
+    // Angle from center to cursor for desktop
+    highlightAngle = atan2(mouseY - cy, mouseX - cx);
+  } else {
+    // Use gyro angle for mobile
+    highlightAngle = gyroAngle;
+  }
+
+  // Add shimmer by oscillating the angle a bit
+  highlightAngle += 0.2 * sin(time);
+
+  let gx1 = cx + Math.cos(highlightAngle) * 120;
+  let gy1 = cy + Math.sin(highlightAngle) * 120;
+  let gx2 = cx + Math.cos(highlightAngle + PI) * 120;
+  let gy2 = cy + Math.sin(highlightAngle + PI) * 120;
 
   let gradient = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
   gradient.addColorStop(0, 'rgba(255, 150, 255, 0)');
@@ -179,7 +194,7 @@ function windowResized() {
   distortionSize = Math.min(width, height) * 0.4;
   blurBuffer = createGraphics(width, height);
   blurBuffer.image(bgImg, 0, 0, width, height);
-  blurBuffer.filter(BLUR, 3); // Re-blur on resize
+  blurBuffer.filter(BLUR, 3);
 }
 </script>
 </body>
