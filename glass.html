@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Himbo Orb x Apple Centered Fix</title>
+  <title>Apple Liquid Himbo Orb</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -36,7 +36,7 @@ function setup() {
   pixelDensity(1.5);
   createCanvas(windowWidth, windowHeight);
   textFont("-apple-system");
-  textAlign(LEFT, TOP); // we’ll manually center it now
+  textAlign(LEFT, TOP);
   setResponsiveText();
 
   buttonX = width / 2;
@@ -56,8 +56,14 @@ function setup() {
 
 function draw() {
   if (!bgLoaded) return;
+
+  // blurred background only (no text)
   image(blurBuffer, 0, 0);
+
+  // draw glass orb distortion
   drawGlass(buttonX, buttonY);
+
+  // draw clean text above
   drawCleanText();
 }
 
@@ -73,13 +79,7 @@ function drawCleanText() {
 function drawBlurBuffer() {
   blurBuffer.clear();
   blurBuffer.image(bgImg, 0, 0, width, height);
-  blurBuffer.fill(255, 235);
-  blurBuffer.noStroke();
-  let textBlockHeight = getTextBlockHeight(poeticLine, maxTextWidth);
-  let x = (width - maxTextWidth) / 2;
-  let y = (height - textBlockHeight) / 2;
-  blurBuffer.text(poeticLine, x, y, maxTextWidth);
-  blurBuffer.filter(BLUR, 2.5);
+  blurBuffer.filter(BLUR, 2.5); // only background is blurred now
 }
 
 function drawGlass(x, y) {
@@ -161,7 +161,7 @@ function getTextBlockHeight(txt, w) {
       line = testLine;
     }
   }
-  return lines * textLeading(); // estimated height
+  return lines * textLeading();
 }
 
 function mousePressed() {
