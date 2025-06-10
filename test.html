@@ -3,16 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Only Distorted Text in Glass</title>
+  <title>Glass Circle with Centered Text</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
       margin: 0;
       padding: 0;
       overflow: hidden;
+      height: 100%;
     }
     canvas {
       display: block;
+      margin: 0 auto;
     }
   </style>
 </head>
@@ -54,10 +56,10 @@ function updateBlurBuffer() {
   // Draw the centered text into the blur buffer (so it gets blurred under glass)
   blurBuffer.push();
   blurBuffer.textAlign(CENTER, CENTER);
-  blurBuffer.textSize(80);
+  blurBuffer.textSize(min(width, height) * 0.05); // Responsive text size
   blurBuffer.textFont('system-ui');
   blurBuffer.fill(255);
-  let margin = 80;
+  let margin = width * 0.1;
   let boxWidth = width - margin * 2;
   blurBuffer.text(mainText, width/2, height/2, boxWidth, height);
   blurBuffer.pop();
@@ -75,10 +77,21 @@ function draw() {
     return;
   }
 
-  // Draw only the original background image (no crisp text)
+  // Draw background image
   image(bgImg, 0, 0, width, height);
 
-  // Draw the glass button (samples from the blurred buffer, which includes the blurred text)
+  // Draw crisp, centered text on main canvas
+  push();
+  textAlign(CENTER, CENTER);
+  textSize(min(width, height) * 0.05); // Responsive text size
+  textFont('system-ui');
+  fill(255);
+  let margin = width * 0.1;
+  let boxWidth = width - margin * 2;
+  text(mainText, width/2, height/2, boxWidth, height);
+  pop();
+
+  // Draw glass button (samples from blurred buffer, which includes blurred text)
   drawGlass(buttonX, buttonY);
 }
 
