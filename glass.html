@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Himbo Glass Orb</title>
+  <title>Apple Liquid Himbo Orb</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -55,17 +55,27 @@ function setup() {
 
 function draw() {
   if (!bgLoaded) return;
+
+  // draw blurred buffer behind
   image(blurBuffer, 0, 0);
+
+  // draw orb
   drawGlass(buttonX, buttonY);
+
+  // draw sharp text clean on top
+  fill(255, 235);
+  noStroke();
+  textLeading(textSize() * 1.2);
+  text(poeticLine, width / 2, height / 2, width * 0.85);
 }
 
 function drawBlurBuffer() {
   blurBuffer.clear();
-  blurBuffer.image(bgImg, 0, 0, width, height); // fills screen
+  blurBuffer.image(bgImg, 0, 0, width, height); // cover
   blurBuffer.fill(255, 235);
   blurBuffer.noStroke();
   blurBuffer.textLeading(textSize() * 1.2);
-  blurBuffer.text(poeticLine, width / 2, height / 2, width * 0.85); // centered poetic line
+  blurBuffer.text(poeticLine, width / 2, height / 2, width * 0.85);
   blurBuffer.filter(BLUR, 2.5);
 }
 
@@ -169,7 +179,7 @@ function windowResized() {
 
 function setResponsiveText(target) {
   let base = min(windowWidth, windowHeight);
-  let fontSize = constrain(base * 0.045, 18, 80); // nice scaling
+  let fontSize = constrain(base * 0.045, 16, 80); // sweet spot
   if (target) {
     target.textSize(fontSize);
   } else {
