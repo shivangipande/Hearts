@@ -22,8 +22,8 @@ let buttonX, buttonY;
 let isDragging = false;
 let offsetX = 0, offsetY = 0;
 let bgImg;
-let buffer;
 let gyroAngle = 0;
+let distortionSize;
 
 function preload() {
   bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
@@ -33,9 +33,9 @@ function setup() {
   pixelDensity(1.5);
   createCanvas(windowWidth, windowHeight);
   frameRate(30);
-  buffer = createGraphics(300, 300);
   buttonX = width / 2;
   buttonY = height / 2;
+  distortionSize = min(width, height) * 0.4;
 
   if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
     DeviceOrientationEvent.requestPermission().then(response => {
@@ -59,47 +59,45 @@ function draw() {
 }
 
 function drawGlass(x, y) {
-  let size = min(width, height) * 0.4;
-  let radius = size / 2;
-  buffer.clear();
+  let radius = distortionSize / 2;
+  let d = distortionSize;
+  let buffer = createGraphics(d, d);
 
-  // Draw blurred background
-  buffer.image(bgImg, -x + buffer.width / 2, -y + buffer.height / 2, width, height);
-  buffer.drawingContext.filter = 'blur(10px)';
-  buffer.image(buffer, 0, 0); // Apply blur to buffer itself
-  buffer.drawingContext.filter = 'none';
-
-  loadPixels();
+  buffer.image(bgImg, -x + d / 2, -y + d / 2, width, height);
+  buffer.filter(BLUR, 3);
   buffer.loadPixels();
+  loadPixels();
 
-  // Barrel distortion in buffer
-  for (let px = 0; px < buffer.width; px += 2) {
-    for (let py = 0; py < buffer.height; py += 2) {
-      let dx = px - buffer.width / 2;
-      let dy = py - buffer.height / 2;
-      let dist = sqrt(dx * dx + dy * dy);
-      if (dist < radius) {
-        let norm = dist / radius;
-        let factor = 1 + 0.2 * norm * norm;
-        let sx = buffer.width / 2 + dx / factor;
-        let sy = buffer.height / 2 + dy / factor;
+  for (let px = 0; px < d; px += 2) {
+    for (let py = 0; py < d; py += 2) {
+      let dx = px - radius;
+      let dy = py - radius;
+      let distFromCenter = sqrt(dx * dx + dy * dy);
+      if (distFromCenter < radius) {
+        let norm = distFromCenter / radius;
+        let k = 0.2;
+        let factor = 1 + k * norm * norm;
+        let sx = radius + dx / factor;
+        let sy = radius + dy / factor;
 
-        let col = buffer.get(sx, sy);
-        fill(col[0], col[1], col[2], 180);
+        let i = (int(sx) + int(sy) * d) * 4;
+        let r = buffer.pixels[i];
+        let g = buffer.pixels[i + 1];
+        let b = buffer.pixels[i + 2];
+
         noStroke();
+        fill(r, g, b, 180);
         rect(x - radius + px, y - radius + py, 2, 2);
       }
     }
   }
 
-  // Circle edge glow
   drawCircleEdge(x, y, radius);
 
-  // Outer ring
   stroke(255, 255, 255, 50);
   strokeWeight(0.6);
   noFill();
-  circle(x, y, size);
+  circle(x, y, d);
 }
 
 function drawCircleEdge(cx, cy, radius) {
@@ -125,7 +123,7 @@ function drawCircleEdge(cx, cy, radius) {
 
 function mousePressed() {
   let d = dist(mouseX, mouseY, buttonX, buttonY);
-  if (d < min(width, height) * 0.2) {
+  if (d < distortionSize / 2) {
     isDragging = true;
     offsetX = mouseX - buttonX;
     offsetY = mouseY - buttonY;
@@ -145,6 +143,7 @@ function mouseReleased() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  distortionSize = min(width, height) * 0.4;
 }
 </script>
 </body>
