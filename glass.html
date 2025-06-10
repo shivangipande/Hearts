@@ -1,206 +1,181 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apple Liquid Glass Button</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            cursor: default;
-            overflow: hidden;
-        }
-        canvas {
-            display: block;
-            z-index: 1;
-            touch-action: none;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Liquid Glass Button</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      cursor: default;
+    }
+    canvas {
+      display: block;
+      z-index: 1;
+      touch-action: none;
+    }
+  </style>
 </head>
 <body>
-    <div id="canvas-container"></div>
-    <noscript>Please enable JavaScript to view this page.</noscript>
-    <script>
-        let buttonX, buttonY;
-        let isDragging = false;
-        let offsetX, offsetY;
-        let lowPerformanceMode = false;
+  <div id="canvas-container"></div>
+  <noscript>Please enable JavaScript to view this page.</noscript>
+  <script>
+    let buttonX, buttonY;
+    let isDragging = false;
+    let offsetX, offsetY;
 
-        function setup() {
-            pixelDensity(2);
-            let c = createCanvas(windowWidth, windowHeight);
-            c.parent('canvas-container');
-            buttonX = width/2;
-            buttonY = height/2;
-            background(30, 60, 114); // fallback background
-        }
+    function setup() {
+      pixelDensity(2);
+      let c = createCanvas(windowWidth, windowHeight);
+      c.parent('canvas-container');
+      buttonX = width / 2;
+      buttonY = height / 2;
+      background(30, 60, 114);
+    }
 
-        function draw() {
-            if (frameCount % (lowPerformanceMode ? 2 : 1) === 0) {
-                drawBackground();
-            }
-            drawGlass(buttonX, buttonY);
-        }
+    function draw() {
+      drawBackground();
+      drawGlass(buttonX, buttonY);
+    }
 
-        function drawBackground() {
-            background(30, 60, 114);
-            for(let y = 0; y < height; y += (lowPerformanceMode ? 3 : 1)) {
-                let time = millis() * 0.0008;
-                let wave1 = sin(y * 0.015 + time * 3) * 40;
-                let wave2 = cos(y * 0.012 + time * 2.3) * 35;
+    function drawBackground() {
+      background(30, 60, 114);
+      let time = millis() * 0.0008;
+      for (let y = 0; y < height; y += 2) {
+        let wave1 = sin(y * 0.015 + time * 3) * 40;
+        let wave2 = cos(y * 0.012 + time * 2.3) * 35;
+        let r = 60 + wave1 + sin(time + y * 0.01) * 30;
+        let g = 90 + wave2 + cos(time * 1.2 + y * 0.008) * 40;
+        let b = 180 + sin(y * 0.008 + time * 1.8) * 60;
+        stroke(r, g, b);
+        strokeWeight(2);
+        line(0, y, width, y);
+      }
 
-                let r = 60 + wave1 + sin(time + y * 0.01) * 30;
-                let g = 90 + wave2 + cos(time * 1.2 + y * 0.008) * 40;
-                let b = 180 + sin(y * 0.008 + time * 1.8) * 60;
+      fill(255, 255, 255, 200);
+      textAlign(CENTER, CENTER);
+      textSize(48);
+      text('APPLE', width/2 - 150, height/2 - 100);
+      text('GLASS', width/2 + 150, height/2 - 50);
 
-                stroke(r, g, b);
-                strokeWeight(2);
-                line(0, y, width, y);
-            }
+      textSize(32);
+      text('Liquid Glass', width/2, height/2 + 80);
 
-            fill(255, 255, 255, 200);
-            textAlign(CENTER, CENTER);
-            textSize(48);
-            text('APPLE', width/2 - 150, height/2 - 100);
-            text('GLASS', width/2 + 150, height/2 - 50);
-            textSize(32);
-            text('Liquid Glass', width/2, height/2 + 80);
-            textSize(24);
-            fill(255, 255, 255, 150);
-            text('Drag to see blur effect', width/2, height/2 + 120);
-            textSize(28);
-            fill(255, 255, 255, 180);
-            text('1234567890', width/2 - 100, height/2 - 20);
-            text('ABCDEFGHIJ', width/2 + 100, height/2 + 20);
-        }
+      textSize(24);
+      fill(255, 255, 255, 150);
+      text('Drag to see blur effect', width/2, height/2 + 120);
 
-        function drawGlass(x, y) {
-            let size = 200;
-            let radius = size / 2;
-            let bg = get(x - size/2 - 40, y - size/2 - 40, size + 80, size + 80);
+      textSize(28);
+      fill(255, 255, 255, 180);
+      text('1234567890', width/2 - 100, height/2 - 20);
+      text('ABCDEFGHIJ', width/2 + 100, height/2 + 20);
+    }
 
-            drawingContext.save();
-            drawingContext.shadowColor = 'rgba(0,0,0,0.3)';
-            drawingContext.shadowBlur = 12;
-            drawingContext.shadowOffsetX = 6;
-            drawingContext.shadowOffsetY = 8;
-            stroke(0, 0, 0, 40);
-            strokeWeight(3);
-            noFill();
-            circle(x, y, size);
-            drawingContext.restore();
+    // Updated glass rendering
+    function drawGlass(x, y) {
+      let size = 200;
+      let radius = size / 2;
+      let bg = get(x - size / 2, y - size / 2, size, size);
 
-            let ctx = drawingContext;
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, TWO_PI);
-            ctx.clip();
+      drawingContext.save();
+      drawingContext.shadowColor = 'rgba(0,0,0,0.3)';
+      drawingContext.shadowBlur = 12;
+      drawingContext.shadowOffsetX = 6;
+      drawingContext.shadowOffsetY = 8;
+      stroke(0, 0, 0, 40);
+      strokeWeight(3);
+      noFill();
+      circle(x, y, size);
+      drawingContext.restore();
 
-            for(let i = 0; i < 5; i++) {
-                ctx.filter = `blur(${5 + i * 2}px)`;
-                ctx.globalAlpha = 0.25;
-                image(bg, x - size/2 - 40, y - size/2 - 40);
-            }
+      let ctx = drawingContext;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, TWO_PI);
+      ctx.clip();
 
-            ctx.filter = 'none';
-            ctx.globalAlpha = 1.0;
+      ctx.filter = 'blur(4px) saturate(1.1)';
+      ctx.globalAlpha = 0.6;
+      image(bg, x - size/2, y - size/2);
+      ctx.filter = 'none';
+      ctx.globalAlpha = 1.0;
+      ctx.restore();
 
-            let step = lowPerformanceMode ? 1 : 0.5;
-            for(let px = 0; px < size; px += step) {
-                for(let py = 0; py < size; py += step) {
-                    let cx = size / 2, cy = size / 2;
-                    let d = dist(px, py, cx, cy);
-                    if(d <= radius) {
-                        let nd = d / radius;
-                        let k1 = 0.4;
-                        let distortion = 1 + k1 * nd * nd;
-                        let angle = atan2(py - cy, px - cx);
-                        let sd = d / distortion;
-                        let sx = cx + cos(angle) * sd + 40;
-                        let sy = cy + sin(angle) * sd + 40;
-                        sx = constrain(sx, 0, bg.width-1);
-                        sy = constrain(sy, 0, bg.height-1);
-                        let c = bg.get(sx, sy);
-                        fill(...c, 180);
-                        noStroke();
-                        rect(x - size/2 + px, y - size/2 + py, step, step);
-                    }
-                }
-            }
+      for (let i = 0; i < 30; i++) {
+        let angle = random(TWO_PI);
+        let r = random(radius);
+        let nx = x + cos(angle) * r;
+        let ny = y + sin(angle) * r;
+        fill(255, 255, 255, random(4, 10));
+        noStroke();
+        circle(nx, ny, random(0.2, 0.8));
+      }
 
-            ctx.restore();
-            for(let i = 0; i < 40; i++) {
-                let angle = random(TWO_PI);
-                let r = random(radius);
-                let nx = x + cos(angle) * r;
-                let ny = y + sin(angle) * r;
-                fill(255, 255, 255, random(2, 8));
-                noStroke();
-                circle(nx, ny, random(0.2, 1));
-            }
-            let mouseAngle = atan2(mouseY - y, mouseX - x);
-            drawCircleSpectralEdge(x, y, radius, mouseAngle);
-            stroke(255, 255, 255, 60);
-            strokeWeight(0.5);
-            noFill();
-            circle(x, y, size);
-        }
+      let mouseAngle = atan2(mouseY - y, mouseX - x);
+      drawCircleSpectralEdge(x, y, radius, mouseAngle);
 
-        function drawCircleSpectralEdge(cx, cy, r, angle) {
-            let ctx = drawingContext;
-            let gx1 = cx + cos(angle) * 120;
-            let gy1 = cy + sin(angle) * 120;
-            let gx2 = cx + cos(angle + PI) * 120;
-            let gy2 = cy + sin(angle + PI) * 120;
+      stroke(255, 255, 255, 50);
+      strokeWeight(0.5);
+      noFill();
+      circle(x, y, size);
+    }
 
-            let grad = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
-            grad.addColorStop(0, 'rgba(255,150,255,0)');
-            grad.addColorStop(0.4, 'rgba(255,200,255,0.3)');
-            grad.addColorStop(0.5, 'rgba(255,255,255,0.6)');
-            grad.addColorStop(0.6, 'rgba(200,255,255,0.3)');
-            grad.addColorStop(1, 'rgba(150,255,255,0)');
+    function drawCircleSpectralEdge(cx, cy, r, angle) {
+      let ctx = drawingContext;
+      let gx1 = cx + cos(angle) * 120;
+      let gy1 = cy + sin(angle) * 120;
+      let gx2 = cx + cos(angle + PI) * 120;
+      let gy2 = cy + sin(angle + PI) * 120;
 
-            ctx.strokeStyle = grad;
-            ctx.lineWidth = 2;
-            ctx.filter = 'blur(1px)';
-            ctx.beginPath();
-            ctx.arc(cx, cy, r, 0, TWO_PI);
-            ctx.stroke();
-            ctx.filter = 'none';
-        }
+      let grad = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
+      grad.addColorStop(0, 'rgba(255,150,255,0)');
+      grad.addColorStop(0.4, 'rgba(255,200,255,0.3)');
+      grad.addColorStop(0.5, 'rgba(255,255,255,0.6)');
+      grad.addColorStop(0.6, 'rgba(200,255,255,0.3)');
+      grad.addColorStop(1, 'rgba(150,255,255,0)');
 
-        function mousePressed() {
-            let size = 200;
-            if (dist(mouseX, mouseY, buttonX, buttonY) < size / 2) {
-                isDragging = true;
-                offsetX = mouseX - buttonX;
-                offsetY = mouseY - buttonY;
-                document.body.style.cursor = 'grabbing';
-            }
-        }
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 2;
+      ctx.filter = 'blur(1px)';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, TWO_PI);
+      ctx.stroke();
+      ctx.filter = 'none';
+    }
 
-        function mouseDragged() {
-            if (isDragging) {
-                buttonX = constrain(mouseX - offsetX, 100, width - 100);
-                buttonY = constrain(mouseY - offsetY, 100, height - 100);
-            }
-        }
+    function mousePressed() {
+      let size = 200;
+      if (dist(mouseX, mouseY, buttonX, buttonY) < size / 2) {
+        isDragging = true;
+        offsetX = mouseX - buttonX;
+        offsetY = mouseY - buttonY;
+        document.body.style.cursor = 'grabbing';
+      }
+    }
 
-        function mouseReleased() {
-            isDragging = false;
-            document.body.style.cursor = 'default';
-        }
+    function mouseDragged() {
+      if (isDragging) {
+        buttonX = constrain(mouseX - offsetX, 100, width - 100);
+        buttonY = constrain(mouseY - offsetY, 100, height - 100);
+      }
+    }
 
-        function windowResized() {
-            resizeCanvas(windowWidth, windowHeight);
-        }
-    </script>
+    function mouseReleased() {
+      isDragging = false;
+      document.body.style.cursor = 'default';
+    }
+
+    function windowResized() {
+      resizeCanvas(windowWidth, windowHeight);
+    }
+  </script>
 </body>
 </html>
