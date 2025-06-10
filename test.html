@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apple Liquid Glass Button (Optimized)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<script>
+p5.disableFriendlyErrors = true; // Speeds up p5.js sketches
+
+let buttonX, buttonY;
+let isDragging = false;
+let offsetX = 0, offsetY = 0;
+let bgImg;
+let gyroAngle = 0;
+let distortionSize;
+let blurBuffer;
+
+function preload() {
+  bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+}
+
+function setup() {
+  pixelDensity(1);
+  createCanvas(windowWidth, windowHeight);
+  buttonX = width / 2;
+  buttonY = height / 2;
+  distortionSize = Math.min(width, height) * 0.4;
+  blurBuffer = createGraphics(width, height);
+  blurBuffer.image(bgImg, 0, 0, width, height);
+  blurBuffer.filter(BLUR, 3); // Only blur once here
+
+  // Device orientation for highlight tilt
+  if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+    DeviceOrientationEvent.requestPermission().then(response => {
+      if (response === 'granted') {
+        window.addEventListener('deviceorientation', handleGyro);
+      }
+    });
+  } else {
+    window.addEventListener('deviceorientation', handleGyro);
+  }
+}
+
+function handleGyro(e) {
+  gyroAngle = radians(e.gamma || 0);
+}
+
+function draw() {
+  image(bgImg, 0, 0, width, height); // Draw original background
+  drawGlass(buttonX, buttonY); // Draw glass effect
+}
+
+function drawGlass(x, y) {
+  let r = distortionSize / 2;
+  let d = Math.floor(distortionSize);
+  // Only get the region around the button
+  let buffer = blurBuffer.get(x - r, y - r, d, d);
+
+  buffer.loadPixels();
+  let distorted = createImage(d, d);
+  distorted.loadPixels();
+
+  for (let px = 0; px < d; px++) {
+    for (let py = 0; py < d; py++) {
+      let dx = px - r;
+      let dy = py - r;
+      let distFromCenter = Math.sqrt(dx * dx + dy * dy);
+      let di = (px + py * d) * 4;
+      if (distFromCenter <= r) {
+        let norm = distFromCenter / r;
+        let k = 0.2;
+        let factor = 1 + k * norm * norm;
+        let sx = constrain(r + dx / factor, 0, d - 1);
+        let sy = constrain(r + dy / factor, 0, d - 1);
+        let si = (Math.floor(sx) + Math.floor(sy) * d) * 4;
+
+        distorted.pixels[di] = buffer.pixels[si];
+        distorted.pixels[di + 1] = buffer.pixels[si + 1];
+        distorted.pixels[di + 2] = buffer.pixels[si + 2];
+        distorted.pixels[di + 3] = 220;
+      } else {
+        distorted.pixels[di + 3] = 0;
+      }
+    }
+  }
+  distorted.updatePixels();
+
+  drawingContext.save();
+  drawingContext.beginPath();
+  drawingContext.arc(x, y, r, 0, TWO_PI);
+  drawingContext.clip();
+  image(distorted, x - r, y - r);
+  drawingContext.restore();
+
+  drawCircleEdge(x, y, r);
+  stroke(255, 255, 255, 50);
+  strokeWeight(0.6);
+  noFill();
+  circle(x, y, d);
+}
+
+function drawCircleEdge(cx, cy, radius) {
+  let ctx = drawingContext;
+  let gx1 = cx + Math.cos(gyroAngle) * 120;
+  let gy1 = cy + Math.sin(gyroAngle) * 120;
+  let gx2 = cx + Math.cos(gyroAngle + PI) * 120;
+  let gy2 = cy + Math.sin(gyroAngle + PI) * 120;
+
+  let gradient = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
+  gradient.addColorStop(0, 'rgba(255, 150, 255, 0)');
+  gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
+  gradient.addColorStop(1, 'rgba(150, 255, 255, 0)');
+
+  ctx.strokeStyle = gradient;
+  ctx.lineWidth = 2;
+  ctx.filter = 'blur(1px)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, TWO_PI);
+  ctx.stroke();
+  ctx.filter = 'none';
+}
+
+function mousePressed() {
+  if (dist(mouseX, mouseY, buttonX, buttonY) < distortionSize / 2) {
+    isDragging = true;
+    offsetX = mouseX - buttonX;
+    offsetY = mouseY - buttonY;
+  }
+}
+
+function mouseDragged() {
+  if (isDragging) {
+    buttonX = constrain(mouseX - offsetX, 60, width - 60);
+    buttonY = constrain(mouseY - offsetY, 60, height - 60);
+  }
+}
+
+function mouseReleased() {
+  isDragging = false;
+}
+
+function touchStarted() {
+  if (dist(touchX, touchY, buttonX, buttonY) < distortionSize / 2) {
+    isDragging = true;
+    offsetX = touchX - buttonX;
+    offsetY = touchY - buttonY;
+  }
+  return false;
+}
+
+function touchMoved() {
+  if (isDragging) {
+    buttonX = constrain(touchX - offsetX, 60, width - 60);
+    buttonY = constrain(touchY - offsetY, 60, height - 60);
+  }
+  return false;
+}
+
+function touchEnded() {
+  isDragging = false;
+  return false;
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  distortionSize = Math.min(width, height) * 0.4;
+  blurBuffer = createGraphics(width, height);
+  blurBuffer.image(bgImg, 0, 0, width, height);
+  blurBuffer.filter(BLUR, 3); // Re-blur on resize
+}
+</script>
+</body>
+</html>
