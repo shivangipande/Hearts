@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Apple Himbo Glass (No Server Needed)</title>
+  <title>Apple Himbo Glass</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -35,8 +35,8 @@ function setup() {
   pixelDensity(1.5);
   createCanvas(windowWidth, windowHeight);
   textFont("-apple-system");
-  textSize(80);
   textAlign(CENTER, CENTER);
+  setResponsiveText();
 
   buttonX = width / 2;
   buttonY = height / 2;
@@ -44,8 +44,8 @@ function setup() {
 
   blurBuffer = createGraphics(width, height);
   blurBuffer.textFont("-apple-system");
-  blurBuffer.textSize(80);
   blurBuffer.textAlign(CENTER, CENTER);
+  setResponsiveText(blurBuffer);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
 
   bgImg.loadPixels();
@@ -64,7 +64,7 @@ function drawBlurBuffer() {
   blurBuffer.image(bgImg, 0, 0, width, height);
   blurBuffer.fill(255, 235);
   blurBuffer.noStroke();
-  blurBuffer.textLeading(95);
+  blurBuffer.textLeading(textSize() * 1.1);
   blurBuffer.text(poeticLine, width / 2, height / 2, width * 0.85);
   blurBuffer.filter(BLUR, 2.5);
 }
@@ -156,13 +156,25 @@ function mouseReleased() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  setResponsiveText();
   distortionSize = min(width, height) * 0.4;
+
   blurBuffer = createGraphics(width, height);
   blurBuffer.textFont("-apple-system");
-  blurBuffer.textSize(80);
   blurBuffer.textAlign(CENTER, CENTER);
+  setResponsiveText(blurBuffer);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
   if (bgLoaded) drawBlurBuffer();
+}
+
+function setResponsiveText(target) {
+  let base = min(windowWidth, windowHeight);
+  let fontSize = constrain(base * 0.04, 18, 80); // Responsive font size
+  if (target) {
+    target.textSize(fontSize);
+  } else {
+    textSize(fontSize);
+  }
 }
 </script>
 </body>
