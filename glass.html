@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Apple Himbo Glass</title>
+  <meta charset="UTF-8">
+  <title>Himbo Glass Orb</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -24,8 +24,8 @@ let isDragging = false;
 let offsetX = 0, offsetY = 0;
 let bgImg, distortionSize;
 let blurBuffer, distorted;
-let poeticLine = "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical — a tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.";
 let bgLoaded = false;
+let poeticLine = "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical — a tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.";
 
 function preload() {
   bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=1200&auto=format&fit=crop");
@@ -61,11 +61,11 @@ function draw() {
 
 function drawBlurBuffer() {
   blurBuffer.clear();
-  blurBuffer.image(bgImg, 0, 0, width, height);
+  blurBuffer.image(bgImg, 0, 0, width, height); // fills screen
   blurBuffer.fill(255, 235);
   blurBuffer.noStroke();
-  blurBuffer.textLeading(textSize() * 1.1);
-  blurBuffer.text(poeticLine, width / 2, height / 2, width * 0.85);
+  blurBuffer.textLeading(textSize() * 1.2);
+  blurBuffer.text(poeticLine, width / 2, height / 2, width * 0.85); // centered poetic line
   blurBuffer.filter(BLUR, 2.5);
 }
 
@@ -169,7 +169,7 @@ function windowResized() {
 
 function setResponsiveText(target) {
   let base = min(windowWidth, windowHeight);
-  let fontSize = constrain(base * 0.04, 18, 80); // Responsive font size
+  let fontSize = constrain(base * 0.045, 18, 80); // nice scaling
   if (target) {
     target.textSize(fontSize);
   } else {
