@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Liquid Glass Himbo</title>
+  <title>Himbo Glass (Final)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -28,10 +28,8 @@
 let buttonX, buttonY;
 let isDragging = false;
 let offsetX = 0, offsetY = 0;
-let bgImg;
-let distortionSize;
-let blurBuffer;
-let distorted;
+let bgImg, distortionSize;
+let blurBuffer, distorted;
 let poeticLine = "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical — a tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.";
 let sfFont;
 
@@ -49,12 +47,22 @@ function setup() {
   buttonX = width / 2;
   buttonY = height / 2;
   distortionSize = min(width, height) * 0.4;
+
   blurBuffer = createGraphics(width, height);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
+
+  drawBlurBuffer(); // render once to buffer
 }
 
 function draw() {
-  // Draw image and poetic line into buffer
+  // Only draw the blurred buffer as background (fake transparency)
+  image(blurBuffer, 0, 0);
+
+  // Draw fake glass lens
+  drawGlass(buttonX, buttonY);
+}
+
+function drawBlurBuffer() {
   blurBuffer.image(bgImg, 0, 0, width, height);
   blurBuffer.fill(255, 235);
   blurBuffer.noStroke();
@@ -63,24 +71,7 @@ function draw() {
   blurBuffer.textAlign(CENTER, CENTER);
   blurBuffer.textLeading(95);
   blurBuffer.text(poeticLine, width / 2, height - 160, width * 0.85);
-
-  // Apply blur
   blurBuffer.filter(BLUR, 2.5);
-
-  // Show background
-  image(bgImg, 0, 0, width, height);
-
-  // Glass distortion
-  drawGlass(buttonX, buttonY);
-
-  // Redraw sharp text on top
-  fill(255, 235);
-  noStroke();
-  textFont(sfFont);
-  textSize(80);
-  textAlign(CENTER, CENTER);
-  textLeading(95);
-  text(poeticLine, width / 2, height - 160, width * 0.85);
 }
 
 function drawGlass(x, y) {
@@ -108,7 +99,7 @@ function drawGlass(x, y) {
         distorted.pixels[i] = buffer.pixels[si];
         distorted.pixels[i + 1] = buffer.pixels[si + 1];
         distorted.pixels[i + 2] = buffer.pixels[si + 2];
-        distorted.pixels[i + 3] = 220;
+        distorted.pixels[i + 3] = 230;
       } else {
         distorted.pixels[i + 3] = 0;
       }
@@ -124,10 +115,6 @@ function drawGlass(x, y) {
   drawingContext.restore();
 
   drawCircleEdge(x, y, r);
-  stroke(255, 255, 255, 50);
-  strokeWeight(0.6);
-  noFill();
-  circle(x, y, d);
 }
 
 function drawCircleEdge(cx, cy, radius) {
@@ -176,6 +163,7 @@ function windowResized() {
   distortionSize = min(width, height) * 0.4;
   blurBuffer = createGraphics(width, height);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
+  drawBlurBuffer();
 }
 </script>
 </body>
