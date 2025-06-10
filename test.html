@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apple Liquid Glass Button (Mobile Optimized)</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+  <title>Apple Liquid Glass with Three.js</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
       overflow: hidden;
+      background-color: #000;
     }
     canvas {
       display: block;
@@ -17,171 +17,127 @@
   </style>
 </head>
 <body>
-<script>
-p5.disableFriendlyErrors = true;
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // Setup scene, camera, renderer
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-let buttonX, buttonY;
-let isDragging = false;
-let offsetX = 0, offsetY = 0;
-let bgImg;
-let gyroAngle = 0;
-let distortionSize;
-let blurBuffer;
-let distorted;
+    // Load background texture
+    const loader = new THREE.TextureLoader();
+    const bgTexture = loader.load('https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+    bgTexture.wrapS = bgTexture.wrapT = THREE.RepeatWrapping;
+    const bgPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(window.innerWidth * 0.01, window.innerHeight * 0.01),
+      new THREE.MeshBasicMaterial({ map: bgTexture })
+    );
+    bgPlane.position.z = -1;
+    scene.add(bgPlane);
 
-function preload() {
-  bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
-}
+    // Create glass plane with distortion
+    const glassGeometry = new THREE.PlaneGeometry(3, 3);
+    // Simple shader material for distortion and blur
+    const glassMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uTexture: { value: bgTexture },
+        uTime: { value: 0 },
+        uMouse: { value: new THREE.Vector2(0, 0) },
+        uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        varying vec2 vUv;
+        uniform sampler2D uTexture;
+        uniform float uTime;
+        uniform vec2 uMouse;
+        uniform vec2 uResolution;
 
-function setup() {
-  pixelDensity(1); // For best mobile performance
-  createCanvas(windowWidth, windowHeight);
-  buttonX = width / 2;
-  buttonY = height / 2;
-  distortionSize = Math.min(width, height) * 0.4;
-  blurBuffer = createGraphics(width, height);
-  distorted = createImage(Math.floor(distortionSize), Math.floor(distortionSize));
+        void main() {
+          // Center UVs
+          vec2 uv = vUv;
+          vec2 center = vec2(0.5, 0.5);
+          float dist = distance(uv, center);
+          if (dist > 0.5) discard;
 
-  blurBuffer.image(bgImg, 0, 0, width, height);
-  blurBuffer.filter(BLUR, 2.5);
+          // Distortion
+          float distort = 0.2 * sin(uTime * 0.5) + 0.8;
+          uv += (center - uv) * 0.1 * sin(dist * 10.0 + uTime);
+          vec4 tex = texture2D(uTexture, uv);
 
-  if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
-    DeviceOrientationEvent.requestPermission().then(response => {
-      if (response === 'granted') {
-        window.addEventListener('deviceorientation', handleGyro);
-      }
+          // Highlight (follows mouse/gyro)
+          vec2 mouseNorm = uMouse / uResolution;
+          float highlight = smoothstep(0.4, 0.5, 1.0 - dot(normalize(uv - center), normalize(mouseNorm - center)));
+          vec3 highlightColor = vec3(0.8, 0.9, 1.0) * highlight * 0.6;
+          tex.rgb = mix(tex.rgb, highlightColor, highlight * 0.6);
+
+          // Blur edge
+          float blur = smoothstep(0.4, 0.5, dist);
+          tex.a = 0.8 * (1.0 - blur);
+
+          gl_FragColor = tex;
+        }
+      `,
+      transparent: true
     });
-  } else {
-    window.addEventListener('deviceorientation', handleGyro);
-  }
-}
+    const glassPlane = new THREE.Mesh(glassGeometry, glassMaterial);
+    scene.add(glassPlane);
 
-function handleGyro(e) {
-  gyroAngle = radians(e.gamma || 0);
-}
+    // Light for highlight
+    const light = new THREE.PointLight(0xffffff, 1, 10);
+    light.position.set(2, 2, 2);
+    scene.add(light);
 
-function draw() {
-  image(bgImg, 0, 0, width, height);
-  drawGlass(buttonX, buttonY);
-}
+    // Mouse/touch interaction
+    const mouse = new THREE.Vector2();
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      mouse.x = (mouse.x + 1) * 0.5 * window.innerWidth;
+      mouse.y = (mouse.y + 1) * 0.5 * window.innerHeight;
+      glassMaterial.uniforms.uMouse.value.set(mouse.x, mouse.y);
+    });
+    window.addEventListener('touchmove', (e) => {
+      mouse.x = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.touches[0].clientY / window.innerHeight) * 2 + 1;
+      mouse.x = (mouse.x + 1) * 0.5 * window.innerWidth;
+      mouse.y = (mouse.y + 1) * 0.5 * window.innerHeight;
+      glassMaterial.uniforms.uMouse.value.set(mouse.x, mouse.y);
+    });
 
-function drawGlass(x, y) {
-  let r = distortionSize / 2;
-  let d = Math.floor(distortionSize);
-  let buffer = blurBuffer.get(x - r, y - r, d, d);
+    // Gyro (simplified, not all devices/browsers support)
+    window.addEventListener('deviceorientation', (e) => {
+      let gamma = e.gamma || 0;
+      let beta = e.beta || 0;
+      let x = (gamma / 90) * window.innerWidth * 0.5 + window.innerWidth * 0.5;
+      let y = (beta / 90) * window.innerHeight * 0.5 + window.innerHeight * 0.5;
+      glassMaterial.uniforms.uMouse.value.set(x, y);
+    });
 
-  buffer.loadPixels();
-  distorted.loadPixels();
-
-  for (let py = 0; py < d; py += 1) {
-    for (let px = 0; px < d; px += 1) {
-      let dx = px - r;
-      let dy = py - r;
-      let distSqr = dx * dx + dy * dy;
-      let i = (px + py * d) * 4;
-      if (distSqr <= r * r) {
-        let norm = Math.sqrt(distSqr) / r;
-        let k = 0.2;
-        let factor = 1 + k * norm * norm;
-        let sx = constrain(r + dx / factor, 0, d - 1);
-        let sy = constrain(r + dy / factor, 0, d - 1);
-        let si = (Math.floor(sx) + Math.floor(sy) * d) * 4;
-
-        distorted.pixels[i] = buffer.pixels[si];
-        distorted.pixels[i + 1] = buffer.pixels[si + 1];
-        distorted.pixels[i + 2] = buffer.pixels[si + 2];
-        distorted.pixels[i + 3] = 220;
-      } else {
-        distorted.pixels[i + 3] = 0;
-      }
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      glassMaterial.uniforms.uTime.value += 0.01;
+      glassPlane.rotation.z += 0.001;
+      renderer.render(scene, camera);
     }
-  }
-  distorted.updatePixels();
+    animate();
 
-  drawingContext.save();
-  drawingContext.beginPath();
-  drawingContext.arc(x, y, r, 0, TWO_PI);
-  drawingContext.clip();
-  image(distorted, x - r, y - r);
-  drawingContext.restore();
-
-  drawCircleEdge(x, y, r);
-  stroke(255, 255, 255, 50);
-  strokeWeight(0.6);
-  noFill();
-  circle(x, y, d);
-}
-
-function drawCircleEdge(cx, cy, radius) {
-  let ctx = drawingContext;
-  let gx1 = cx + Math.cos(gyroAngle) * 120;
-  let gy1 = cy + Math.sin(gyroAngle) * 120;
-  let gx2 = cx + Math.cos(gyroAngle + PI) * 120;
-  let gy2 = cy + Math.sin(gyroAngle + PI) * 120;
-
-  let gradient = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
-  gradient.addColorStop(0, 'rgba(255, 150, 255, 0)');
-  gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
-  gradient.addColorStop(1, 'rgba(150, 255, 255, 0)');
-
-  ctx.strokeStyle = gradient;
-  ctx.lineWidth = 2;
-  ctx.filter = 'blur(1px)';
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, TWO_PI);
-  ctx.stroke();
-  ctx.filter = 'none';
-}
-
-function mousePressed() {
-  if (dist(mouseX, mouseY, buttonX, buttonY) < distortionSize / 2) {
-    isDragging = true;
-    offsetX = mouseX - buttonX;
-    offsetY = mouseY - buttonY;
-  }
-}
-
-function mouseDragged() {
-  if (isDragging) {
-    buttonX = constrain(mouseX - offsetX, 60, width - 60);
-    buttonY = constrain(mouseY - offsetY, 60, height - 60);
-  }
-}
-
-function mouseReleased() {
-  isDragging = false;
-}
-
-function touchStarted() {
-  if (dist(touchX, touchY, buttonX, buttonY) < distortionSize / 2) {
-    isDragging = true;
-    offsetX = touchX - buttonX;
-    offsetY = touchY - buttonY;
-  }
-  return false;
-}
-
-function touchMoved() {
-  if (isDragging) {
-    buttonX = constrain(touchX - offsetX, 60, width - 60);
-    buttonY = constrain(touchY - offsetY, 60, height - 60);
-  }
-  return false;
-}
-
-function touchEnded() {
-  isDragging = false;
-  return false;
-}
-
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-  distortionSize = Math.min(width, height) * 0.4;
-  blurBuffer = createGraphics(width, height);
-  blurBuffer.image(bgImg, 0, 0, width, height);
-  blurBuffer.filter(BLUR, 2.5);
-  distorted = createImage(Math.floor(distortionSize), Math.floor(distortionSize));
-}
-</script>
+    // Handle resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      glassMaterial.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+    });
+  </script>
 </body>
 </html>
