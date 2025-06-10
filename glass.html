@@ -3,191 +3,175 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Apple Glass Button</title>
+  <title>Apple Glass Gyro</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
-    body {
+    html, body {
       margin: 0;
-      background: #f2f2f7; /* Apple-style neutral background */
+      padding: 0;
       overflow: hidden;
     }
     canvas {
       display: block;
-      touch-action: none;
     }
   </style>
 </head>
 <body>
-  <script>
-    let buttonX, buttonY, isDragging = false, offsetX, offsetY;
+<script>
+let macBackground;
+let buttonX, buttonY;
+let isDragging = false;
+let offsetX, offsetY;
+let gyroAngle = 0;
 
-    function setup() {
-      pixelDensity(2);
-      createCanvas(windowWidth, windowHeight);
-      buttonX = width / 2;
-      buttonY = height / 2;
-    }
+function preload() {
+  macBackground = loadImage('https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+}
 
-    function draw() {
-      drawBackground();
-      drawGlass(buttonX, buttonY);
-    }
+function setup() {
+  pixelDensity(2);
+  createCanvas(windowWidth, windowHeight);
+  buttonX = width / 2;
+  buttonY = height / 2;
 
-    function drawBackground() {
-      background(242, 242, 247); // static iOS style background
-      fill(180);
-      textAlign(CENTER, CENTER);
-      textSize(20);
-      text("Tap & Drag the Glass", width / 2, 40);
-    }
+  if (window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientation', (e) => {
+      let gamma = e.gamma || 0;
+      let beta = e.beta || 0;
+      gyroAngle = atan2(beta, gamma); // map tilt to angle
+    });
+  }
+}
 
-    function drawGlass(x, y) {
-      let baseSize = min(windowWidth, windowHeight) * 0.4;
-      let size = constrain(baseSize, 140, 240);
-      let radius = size / 2;
+function draw() {
+  background(240);
+  image(macBackground, 0, 0, width, height);
+  drawGlass(buttonX, buttonY);
+}
 
-      let bg = get(x - radius, y - radius, size, size);
+function drawGlass(x, y) {
+  let baseSize = min(windowWidth, windowHeight) * 0.4;
+  let size = constrain(baseSize, 140, 240);
+  let radius = size / 2;
+  let bg = macBackground.get(x - radius, y - radius, size, size);
 
-      drawingContext.save();
-      drawingContext.shadowColor = 'rgba(0,0,0,0.2)';
-      drawingContext.shadowBlur = 6;
-      drawingContext.shadowOffsetX = 3;
-      drawingContext.shadowOffsetY = 4;
-      stroke(0, 0, 0, 30);
-      strokeWeight(1.5);
-      noFill();
-      circle(x, y, size);
-      drawingContext.restore();
+  let ctx = drawingContext;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, TWO_PI);
+  ctx.clip();
 
-      let ctx = drawingContext;
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, TWO_PI);
-      ctx.clip();
+  ctx.filter = 'blur(8px) saturate(1.05)';
+  ctx.globalAlpha = 0.4;
+  image(bg, x - radius, y - radius);
+  ctx.filter = 'none';
+  ctx.globalAlpha = 1.0;
 
-      ctx.filter = 'blur(8px) saturate(1.05)';
-      ctx.globalAlpha = 0.4;
-      image(bg, x - radius, y - radius);
-      ctx.filter = 'none';
-      ctx.globalAlpha = 1.0;
+  let step = windowWidth < 600 ? 1.2 : 0.8;
+  let cx = size / 2;
+  let cy = size / 2;
+  bg.loadPixels();
 
-      let step = windowWidth < 600 ? 1.2 : 0.8;
-      let cx = size / 2;
-      let cy = size / 2;
-      bg.loadPixels();
+  for (let px = 0; px < size; px += step) {
+    for (let py = 0; py < size; py += step) {
+      let dx = px - cx;
+      let dy = py - cy;
+      let d = sqrt(dx * dx + dy * dy);
+      if (d <= radius) {
+        let nd = d / radius;
+        let distortion = 1 + 0.35 * nd * nd;
+        let sd = d / distortion;
+        let angle = atan2(dy, dx);
+        let sx = cx + cos(angle) * sd;
+        let sy = cy + sin(angle) * sd;
+        let sxInt = floor(sx);
+        let syInt = floor(sy);
+        let index = 4 * (sxInt + syInt * bg.width);
+        let r = bg.pixels[index] || 255;
+        let g = bg.pixels[index + 1] || 255;
+        let b = bg.pixels[index + 2] || 255;
 
-      for (let px = 0; px < size; px += step) {
-        for (let py = 0; py < size; py += step) {
-          let dx = px - cx;
-          let dy = py - cy;
-          let d = sqrt(dx * dx + dy * dy);
-          if (d <= radius) {
-            let nd = d / radius;
-            let distortion = 1 + 0.35 * nd * nd;
-            let sd = d / distortion;
-            let angle = atan2(dy, dx);
-            let sx = cx + cos(angle) * sd;
-            let sy = cy + sin(angle) * sd;
-
-            let sxInt = floor(sx);
-            let syInt = floor(sy);
-            let index = 4 * (sxInt + syInt * bg.width);
-            let r = bg.pixels[index] || 255;
-            let g = bg.pixels[index + 1] || 255;
-            let b = bg.pixels[index + 2] || 255;
-            let a = 160;
-
-            if (nd > 0.9 && windowWidth > 600) {
-              let offset = (nd - 0.9) * 0.05;
-              let ri = 4 * (constrain(floor(sx + offset), 0, bg.width - 1) + syInt * bg.width);
-              let bi = 4 * (constrain(floor(sx - offset), 0, bg.width - 1) + syInt * bg.width);
-              r = bg.pixels[ri] || r;
-              b = bg.pixels[bi + 2] || b;
-            }
-
-            fill(r, g, b, a);
-            noStroke();
-            rect(x - radius + px, y - radius + py, step, step);
-          }
+        if (nd > 0.9 && windowWidth > 600) {
+          let offset = (nd - 0.9) * 0.05;
+          let ri = 4 * (constrain(floor(sx + offset), 0, bg.width - 1) + syInt * bg.width);
+          let bi = 4 * (constrain(floor(sx - offset), 0, bg.width - 1) + syInt * bg.width);
+          r = bg.pixels[ri] || r;
+          b = bg.pixels[bi + 2] || b;
         }
-      }
 
-      ctx.restore();
-
-      // Apple-style UI layout inside
-      fill(255, 255, 255, 18);
-      noStroke();
-      rect(x - radius * 0.6, y - radius * 0.3, radius * 1.2, radius * 0.18, 12);
-      rect(x - radius * 0.6, y - radius * 0.05, radius * 1.2, radius * 0.18, 12);
-      rect(x - radius * 0.6, y + radius * 0.2, radius * 0.8, radius * 0.18, 12);
-
-      for (let i = 0; i < 12; i++) {
-        let angle = random(TWO_PI);
-        let r = random(radius);
-        let nx = x + cos(angle) * r;
-        let ny = y + sin(angle) * r;
-        fill(255, 255, 255, random(2, 6));
+        fill(r, g, b, 160);
         noStroke();
-        circle(nx, ny, random(0.2, 0.5));
-      }
-
-      let mouseAngle = atan2(mouseY - y, mouseX - x);
-      drawCircleSpectralEdge(x, y, radius, mouseAngle);
-
-      stroke(255, 255, 255, 50);
-      strokeWeight(0.5);
-      noFill();
-      circle(x, y, size);
-    }
-
-    function drawCircleSpectralEdge(cx, cy, r, angle) {
-      let ctx = drawingContext;
-      let gx1 = cx + cos(angle) * 120;
-      let gy1 = cy + sin(angle) * 120;
-      let gx2 = cx + cos(angle + PI) * 120;
-      let gy2 = cy + sin(angle + PI) * 120;
-
-      let grad = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
-      grad.addColorStop(0, 'rgba(255,150,255,0)');
-      grad.addColorStop(0.4, 'rgba(255,200,255,0.3)');
-      grad.addColorStop(0.5, 'rgba(255,255,255,0.6)');
-      grad.addColorStop(0.6, 'rgba(200,255,255,0.3)');
-      grad.addColorStop(1, 'rgba(150,255,255,0)');
-
-      ctx.strokeStyle = grad;
-      ctx.lineWidth = 2;
-      ctx.filter = 'blur(1px)';
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, TWO_PI);
-      ctx.stroke();
-      ctx.filter = 'none';
-    }
-
-    function mousePressed() {
-      let size = constrain(min(windowWidth, windowHeight) * 0.4, 140, 240);
-      if (dist(mouseX, mouseY, buttonX, buttonY) < size / 2) {
-        isDragging = true;
-        offsetX = mouseX - buttonX;
-        offsetY = mouseY - buttonY;
-        document.body.style.cursor = 'grabbing';
+        rect(x - radius + px, y - radius + py, step, step);
       }
     }
+  }
 
-    function mouseDragged() {
-      if (isDragging) {
-        buttonX = constrain(mouseX - offsetX, 80, width - 80);
-        buttonY = constrain(mouseY - offsetY, 80, height - 80);
-      }
-    }
+  ctx.restore();
 
-    function mouseReleased() {
-      isDragging = false;
-      document.body.style.cursor = 'default';
-    }
+  // Spectral edge with mouse or gyro
+  let spectralAngle = (windowWidth < 600) ? gyroAngle : atan2(mouseY - y, mouseX - x);
+  drawCircleSpectralEdge(x, y, radius, spectralAngle);
 
-    function windowResized() {
-      resizeCanvas(windowWidth, windowHeight);
-    }
-  </script>
+  drawingContext.save();
+  drawingContext.shadowColor = 'rgba(0,0,0,0.15)';
+  drawingContext.shadowBlur = 5;
+  drawingContext.shadowOffsetX = 2;
+  drawingContext.shadowOffsetY = 3;
+  stroke(255, 255, 255, 60);
+  strokeWeight(1);
+  noFill();
+  circle(x, y, size);
+  drawingContext.restore();
+}
+
+function drawCircleSpectralEdge(cx, cy, r, angle) {
+  let ctx = drawingContext;
+  let gx1 = cx + cos(angle) * 120;
+  let gy1 = cy + sin(angle) * 120;
+  let gx2 = cx + cos(angle + PI) * 120;
+  let gy2 = cy + sin(angle + PI) * 120;
+
+  let grad = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
+  grad.addColorStop(0, 'rgba(255,150,255,0)');
+  grad.addColorStop(0.4, 'rgba(255,200,255,0.3)');
+  grad.addColorStop(0.5, 'rgba(255,255,255,0.6)');
+  grad.addColorStop(0.6, 'rgba(200,255,255,0.3)');
+  grad.addColorStop(1, 'rgba(150,255,255,0)');
+
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 2;
+  ctx.filter = 'blur(1px)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, TWO_PI);
+  ctx.stroke();
+  ctx.filter = 'none';
+}
+
+function mousePressed() {
+  let size = constrain(min(windowWidth, windowHeight) * 0.4, 140, 240);
+  if (dist(mouseX, mouseY, buttonX, buttonY) < size / 2) {
+    isDragging = true;
+    offsetX = mouseX - buttonX;
+    offsetY = mouseY - buttonY;
+    document.body.style.cursor = 'grabbing';
+  }
+}
+
+function mouseDragged() {
+  if (isDragging) {
+    buttonX = constrain(mouseX - offsetX, 80, width - 80);
+    buttonY = constrain(mouseY - offsetY, 80, height - 80);
+  }
+}
+
+function mouseReleased() {
+  isDragging = false;
+  document.body.style.cursor = 'default';
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+</script>
 </body>
 </html>
