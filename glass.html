@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apple Liquid Glass Button (Fixed)</title>
+  <title>Apple Liquid Glass Button (Cleaned & Fixed)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -32,7 +32,6 @@ function preload() {
 function setup() {
   pixelDensity(1.5);
   createCanvas(windowWidth, windowHeight);
-  frameRate(30);
   buttonX = width / 2;
   buttonY = height / 2;
   distortionSize = min(width, height) * 0.4;
@@ -58,57 +57,52 @@ function draw() {
 }
 
 function drawGlass(x, y) {
-  let radius = distortionSize / 2;
+  let r = distortionSize / 2;
   let d = floor(distortionSize);
+
   let buffer = createGraphics(d, d);
-  buffer.image(bgImg, -x + radius, -y + radius, width, height);
+  buffer.image(bgImg, -x + r, -y + r, width, height);
   buffer.filter(BLUR, 3);
+  buffer.loadPixels();
 
-  let ctx = drawingContext;
-  ctx.save();
-
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, TWO_PI);
-  ctx.clip();
-
-  let distorted = buffer.get();
+  let distorted = createImage(d, d);
   distorted.loadPixels();
-  loadPixels();
 
   for (let px = 0; px < d; px++) {
     for (let py = 0; py < d; py++) {
-      let dx = px - radius;
-      let dy = py - radius;
+      let dx = px - r;
+      let dy = py - r;
       let distFromCenter = sqrt(dx * dx + dy * dy);
-      if (distFromCenter < radius) {
-        let norm = distFromCenter / radius;
-        let k = 0.25;
+      if (distFromCenter <= r) {
+        let norm = distFromCenter / r;
+        let k = 0.2;
         let factor = 1 + k * norm * norm;
-        let sx = radius + dx / factor;
-        let sy = radius + dy / factor;
+        let sx = r + dx / factor;
+        let sy = r + dy / factor;
 
-        let i = (int(sx) + int(sy) * d) * 4;
-        let r = distorted.pixels[i];
-        let g = distorted.pixels[i + 1];
-        let b = distorted.pixels[i + 2];
+        let si = (int(sx) + int(sy) * d) * 4;
+        let di = (px + py * d) * 4;
 
-        let canvasX = floor(x - radius + px);
-        let canvasY = floor(y - radius + py);
-
-        if (canvasX >= 0 && canvasX < width && canvasY >= 0 && canvasY < height) {
-          let idx = (canvasX + canvasY * width) * 4;
-          pixels[idx] = r;
-          pixels[idx + 1] = g;
-          pixels[idx + 2] = b;
-          pixels[idx + 3] = 180;
-        }
+        distorted.pixels[di]     = buffer.pixels[si];
+        distorted.pixels[di + 1] = buffer.pixels[si + 1];
+        distorted.pixels[di + 2] = buffer.pixels[si + 2];
+        distorted.pixels[di + 3] = 220;
+      } else {
+        let di = (px + py * d) * 4;
+        distorted.pixels[di + 3] = 0;
       }
     }
   }
+  distorted.updatePixels();
 
-  updatePixels();
-  ctx.restore();
-  drawCircleEdge(x, y, radius);
+  drawingContext.save();
+  drawingContext.beginPath();
+  drawingContext.arc(x, y, r, 0, TWO_PI);
+  drawingContext.clip();
+  image(distorted, x - r, y - r);
+  drawingContext.restore();
+
+  drawCircleEdge(x, y, r);
   stroke(255, 255, 255, 50);
   strokeWeight(0.6);
   noFill();
@@ -137,8 +131,7 @@ function drawCircleEdge(cx, cy, radius) {
 }
 
 function mousePressed() {
-  let d = dist(mouseX, mouseY, buttonX, buttonY);
-  if (d < distortionSize / 2) {
+  if (dist(mouseX, mouseY, buttonX, buttonY) < distortionSize / 2) {
     isDragging = true;
     offsetX = mouseX - buttonX;
     offsetY = mouseY - buttonY;
