@@ -69,24 +69,30 @@ function drawTextCenteredBox(gfx, title, body, centerX, centerY, boxWidth, boxHe
   let titleSize = baseSize * 4;
   let bodySize = baseSize;
 
+  // Set line height for title and body
+  let titleLineHeight = titleSize * 1.2;
+  let bodyLineHeight = bodySize * 1.2;
+
   // Split body into lines that fit the box width
   let bodyLines = splitIntoLines(gfx, body, bodySize, boxWidth);
 
   // Calculate total height for vertical centering
-  let lineHeight = bodySize * 1.2;
-  let titleHeight = lineHeight * 2; // Extra space for title
-  let totalHeight = titleHeight + (bodyLines.length * lineHeight);
+  // Title takes one line, gap is one line of title height, body takes bodyLines.length lines
+  let totalHeight = titleLineHeight + titleLineHeight + (bodyLines.length * bodyLineHeight);
   let startY = centerY - (totalHeight / 2);
 
   // Draw title (faux bold by drawing twice with offset)
   gfx.textSize(titleSize);
-  gfx.text(title, centerX + 1, startY + titleHeight/2);
-  gfx.text(title, centerX, startY + titleHeight/2);
+  gfx.textLeading(titleLineHeight);
+  gfx.text(title, centerX + 1, startY + titleLineHeight/2);
+  gfx.text(title, centerX, startY + titleLineHeight/2);
 
-  // Draw body lines
+  // Draw body lines (start after title + one line of title height as gap)
   gfx.textSize(bodySize);
+  gfx.textLeading(bodyLineHeight);
+  let bodyStartY = startY + titleLineHeight + titleLineHeight;
   for (let i = 0; i < bodyLines.length; i++) {
-    gfx.text(bodyLines[i], centerX, startY + titleHeight + (i * lineHeight));
+    gfx.text(bodyLines[i], centerX, bodyStartY + (i * bodyLineHeight));
   }
   gfx.pop();
 }
