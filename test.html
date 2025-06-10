@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apple Liquid Glass Button (Glass Over Text)</title>
+  <title>Only Distorted Text in Glass</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -75,22 +75,11 @@ function draw() {
     return;
   }
 
-  // Draw original background image
+  // Draw only the original background image (no crisp text)
   image(bgImg, 0, 0, width, height);
 
   // Draw the glass button (samples from the blurred buffer, which includes the blurred text)
   drawGlass(buttonX, buttonY);
-
-  // Draw crisp centered text on top
-  push();
-  textAlign(CENTER, CENTER);
-  textSize(80);
-  textFont('system-ui');
-  fill(255);
-  let margin = 80;
-  let boxWidth = width - margin * 2;
-  text(mainText, width/2, height/2, boxWidth, height);
-  pop();
 }
 
 function drawGlass(x, y) {
