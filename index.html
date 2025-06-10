@@ -386,7 +386,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.4);
-            display: flex;
+            display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -395,6 +395,12 @@
             text-align: center;
             padding: 20px;
             box-sizing: border-box;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .intro-modal.show {
+            opacity: 1;
         }
         
         .intro-poem {
@@ -875,8 +881,13 @@
             canvas.canvas.addEventListener('touchend', handleTouchEnd);
             
             setTimeout(() => {
-                document.getElementById('introModal').style.display = 'flex';
-            }, 500);
+                const introModal = document.getElementById('introModal');
+                introModal.style.display = 'flex';
+                // Small delay to ensure layout is settled before fade-in
+                setTimeout(() => {
+                    introModal.classList.add('show');
+                }, 100);
+            }, 600);
             
             initAudio();
         }
@@ -1199,6 +1210,7 @@
             
             tooltip.style.display = 'block';
             
+            // Force a reflow to get accurate dimensions
             let tooltipRect = tooltip.getBoundingClientRect();
             let baseSize = animal.displaySize || animal.size;
             
@@ -1208,28 +1220,63 @@
             let posX = x !== undefined ? x : animal.x;
             let posY = y !== undefined ? y : animal.y;
             
-            let tooltipX = posX + dotRadius + spacing;
-            let tooltipY = posY - tooltipRect.height / 2;
+            // Calculate all possible positions
+            let positions = [
+                // Right
+                {
+                    x: posX + dotRadius + spacing,
+                    y: posY - tooltipRect.height / 2,
+                    priority: 1
+                },
+                // Left
+                {
+                    x: posX - dotRadius - spacing - tooltipRect.width,
+                    y: posY - tooltipRect.height / 2,
+                    priority: 2
+                },
+                // Below
+                {
+                    x: posX - tooltipRect.width / 2,
+                    y: posY + dotRadius + spacing,
+                    priority: 3
+                },
+                // Above
+                {
+                    x: posX - tooltipRect.width / 2,
+                    y: posY - dotRadius - spacing - tooltipRect.height,
+                    priority: 4
+                }
+            ];
             
-            if (tooltipX + tooltipRect.width > window.innerWidth - 10) {
-                tooltipX = posX - dotRadius - spacing - tooltipRect.width;
-            }
+            // Find the best position that fits in viewport
+            let bestPosition = null;
+            let viewportMargin = 10;
             
-            if (tooltipX < 10) {
-                tooltipX = posX - tooltipRect.width / 2;
+            for (let pos of positions) {
+                let fitsHorizontally = pos.x >= viewportMargin && 
+                                     (pos.x + tooltipRect.width) <= (window.innerWidth - viewportMargin);
+                let fitsVertically = pos.y >= viewportMargin && 
+                                   (pos.y + tooltipRect.height) <= (window.innerHeight - viewportMargin);
                 
-                tooltipY = posY - dotRadius - spacing - tooltipRect.height;
-                
-                if (tooltipY < 10) {
-                    tooltipY = posY + dotRadius + spacing;
+                if (fitsHorizontally && fitsVertically) {
+                    bestPosition = pos;
+                    break;
                 }
             }
             
-            tooltipX = Math.max(10, Math.min(tooltipX, window.innerWidth - tooltipRect.width - 10));
-            tooltipY = Math.max(10, Math.min(tooltipY, window.innerHeight - tooltipRect.height - 10));
+            // If no position fits perfectly, use the primary position with clamping
+            if (!bestPosition) {
+                bestPosition = positions[0];
+            }
             
-            tooltip.style.left = tooltipX + 'px';
-            tooltip.style.top = tooltipY + 'px';
+            // Final boundary clamping to ensure tooltip stays in viewport
+            let finalX = Math.max(viewportMargin, 
+                        Math.min(bestPosition.x, window.innerWidth - tooltipRect.width - viewportMargin));
+            let finalY = Math.max(viewportMargin, 
+                        Math.min(bestPosition.y, window.innerHeight - tooltipRect.height - viewportMargin));
+            
+            tooltip.style.left = finalX + 'px';
+            tooltip.style.top = finalY + 'px';
         }
         
         function hideTooltip() {
@@ -1277,7 +1324,13 @@
         }
         
         function closeIntroModal() {
-            document.getElementById('introModal').style.display = 'none';
+            const introModal = document.getElementById('introModal');
+            introModal.classList.remove('show');
+            
+            // Wait for fade-out transition before hiding
+            setTimeout(() => {
+                introModal.style.display = 'none';
+            }, 300);
             
             if (audioContext && audioContext.state === 'suspended') {
                 audioContext.resume().then(() => {
