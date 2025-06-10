@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Himbo Glass (Final)</title>
+  <title>Himbo Glass</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -11,15 +11,10 @@
       padding: 0;
       overflow: hidden;
       background-color: black;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
     }
     canvas {
       display: block;
-    }
-    @font-face {
-      font-family: "SF Pro Display";
-      src: url("https://cdn.jsdelivr.net/npm/@fontsource-variable/sf-pro-display/files/sf-pro-display-latin-variable-wghtOnly-normal.woff2") format("woff2-variations");
-      font-weight: 100 900;
-      font-display: swap;
     }
   </style>
 </head>
@@ -30,18 +25,19 @@ let isDragging = false;
 let offsetX = 0, offsetY = 0;
 let bgImg, distortionSize;
 let blurBuffer, distorted;
+let bgLoaded = false;
 let poeticLine = "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical — a tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.";
-let sfFont;
 
 function preload() {
-  bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
-  sfFont = loadFont("https://cdn.jsdelivr.net/npm/@fontsource-variable/sf-pro-display/files/sf-pro-display-latin-variable-wghtOnly-normal.woff2");
+  bgImg = loadImage(
+    "https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=1200&auto=format&fit=crop"
+  );
 }
 
 function setup() {
   pixelDensity(1.5);
   createCanvas(windowWidth, windowHeight);
-  textFont(sfFont);
+  textFont("-apple-system");
   textSize(80);
   textAlign(CENTER, CENTER);
   buttonX = width / 2;
@@ -49,26 +45,28 @@ function setup() {
   distortionSize = min(width, height) * 0.4;
 
   blurBuffer = createGraphics(width, height);
+  blurBuffer.textFont("-apple-system");
+  blurBuffer.textSize(80);
+  blurBuffer.textAlign(CENTER, CENTER);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
 
-  drawBlurBuffer(); // render once to buffer
+  // Wait for background image to load before drawing
+  bgImg.loadPixels(); // force loading
+  bgLoaded = true;
+  drawBlurBuffer();
 }
 
 function draw() {
-  // Only draw the blurred buffer as background (fake transparency)
+  if (!bgLoaded) return;
   image(blurBuffer, 0, 0);
-
-  // Draw fake glass lens
   drawGlass(buttonX, buttonY);
 }
 
 function drawBlurBuffer() {
+  blurBuffer.clear();
   blurBuffer.image(bgImg, 0, 0, width, height);
   blurBuffer.fill(255, 235);
   blurBuffer.noStroke();
-  blurBuffer.textFont(sfFont);
-  blurBuffer.textSize(80);
-  blurBuffer.textAlign(CENTER, CENTER);
   blurBuffer.textLeading(95);
   blurBuffer.text(poeticLine, width / 2, height - 160, width * 0.85);
   blurBuffer.filter(BLUR, 2.5);
@@ -77,8 +75,9 @@ function drawBlurBuffer() {
 function drawGlass(x, y) {
   let r = distortionSize / 2;
   let d = floor(distortionSize);
-  let buffer = blurBuffer.get(x - r, y - r, d, d);
+  if (d <= 0) return;
 
+  let buffer = blurBuffer.get(x - r, y - r, d, d);
   buffer.loadPixels();
   distorted.loadPixels();
 
@@ -162,8 +161,11 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   distortionSize = min(width, height) * 0.4;
   blurBuffer = createGraphics(width, height);
+  blurBuffer.textFont("-apple-system");
+  blurBuffer.textSize(80);
+  blurBuffer.textAlign(CENTER, CENTER);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
-  drawBlurBuffer();
+  if (bgLoaded) drawBlurBuffer();
 }
 </script>
 </body>
