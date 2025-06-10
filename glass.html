@@ -53,7 +53,7 @@ function updateBlurBuffer() {
   blurBuffer.clear();
   blurBuffer.image(bgImg, 0, 0, width, height);
 
-  // Draw centered title and body into the blur buffer (using a centered box)
+  // Centered title and body in a 50% width/height box, with reduced gap
   drawTextCenteredBox(blurBuffer, title, body, width/2, height/2, width * 0.5, height * 0.5);
   blurBuffer.filter(BLUR, 2.5);
 }
@@ -61,7 +61,7 @@ function updateBlurBuffer() {
 function drawTextCenteredBox(gfx, title, body, centerX, centerY, boxWidth, boxHeight) {
   gfx.push();
   gfx.textAlign(CENTER, CENTER);
-  gfx.textFont('Helvetica Neue');
+  gfx.textFont('Helvetica Neue, Arial, sans-serif');
   gfx.fill(255);
 
   // Calculate base font size based on box height (empirical, adjust as needed)
@@ -69,28 +69,43 @@ function drawTextCenteredBox(gfx, title, body, centerX, centerY, boxWidth, boxHe
   let titleSize = baseSize * 4;
   let bodySize = baseSize;
 
-  // Set line height for title and body
+  // Set line heights
   let titleLineHeight = titleSize * 1.2;
   let bodyLineHeight = bodySize * 1.2;
 
-  // Split body into lines that fit the box width
+  // Split title into lines if it doesn't fit (wrap to 2 lines if needed)
+  gfx.textSize(titleSize);
+  let titleLines = splitIntoLines(gfx, title, titleSize, boxWidth);
+  if (titleLines.length > 2) {
+    // If title would wrap to more than 2 lines, reduce font size until it fits
+    while (titleLines.length > 2 && titleSize > 0) {
+      titleSize--;
+      gfx.textSize(titleSize);
+      titleLines = splitIntoLines(gfx, title, titleSize, boxWidth);
+    }
+    titleLineHeight = titleSize * 1.2;
+  }
+
+  // Split body into lines
   let bodyLines = splitIntoLines(gfx, body, bodySize, boxWidth);
 
   // Calculate total height for vertical centering
-  // Title takes one line, gap is 30% of titleLineHeight, body takes bodyLines.length lines
-  let totalHeight = titleLineHeight + (titleLineHeight * 0.3) + (bodyLines.length * bodyLineHeight);
+  let gap = titleLineHeight * 0.3;
+  let totalHeight = (titleLines.length * titleLineHeight) + gap + (bodyLines.length * bodyLineHeight);
   let startY = centerY - (totalHeight / 2);
 
-  // Draw title (faux bold by drawing twice with offset)
+  // Draw title lines (faux bold by drawing twice with offset)
   gfx.textSize(titleSize);
   gfx.textLeading(titleLineHeight);
-  gfx.text(title, centerX + 1, startY + titleLineHeight/2);
-  gfx.text(title, centerX, startY + titleLineHeight/2);
+  for (let i = 0; i < titleLines.length; i++) {
+    gfx.text(titleLines[i], centerX + 1, startY + titleLineHeight/2 + (i * titleLineHeight));
+    gfx.text(titleLines[i], centerX, startY + titleLineHeight/2 + (i * titleLineHeight));
+  }
 
-  // Draw body lines (start after title + 30% of titleLineHeight as gap)
+  // Draw body lines (start after title + reduced gap)
   gfx.textSize(bodySize);
   gfx.textLeading(bodyLineHeight);
-  let bodyStartY = startY + titleLineHeight + (titleLineHeight * 0.3);
+  let bodyStartY = startY + (titleLines.length * titleLineHeight) + gap;
   for (let i = 0; i < bodyLines.length; i++) {
     gfx.text(bodyLines[i], centerX, bodyStartY + (i * bodyLineHeight));
   }
@@ -121,7 +136,7 @@ function draw() {
     fill(255);
     textAlign(CENTER, CENTER);
     textSize(24);
-    textFont('Helvetica Neue');
+    textFont('Helvetica Neue, Arial, sans-serif');
     text("Loading background...", width/2, height/2);
     return;
   }
