@@ -57,13 +57,13 @@ function setup() {
 function draw() {
   if (!bgLoaded) return;
 
-  // blurred background only (no text)
-  image(blurBuffer, 0, 0);
+  // Step 1: draw sharp background
+  image(bgImg, 0, 0, width, height);
 
-  // draw glass orb distortion
+  // Step 2: draw orb distortion from blurred text + bg
   drawGlass(buttonX, buttonY);
 
-  // draw clean text above
+  // Step 3: draw sharp clean text above
   drawCleanText();
 }
 
@@ -78,8 +78,17 @@ function drawCleanText() {
 
 function drawBlurBuffer() {
   blurBuffer.clear();
-  blurBuffer.image(bgImg, 0, 0, width, height);
-  blurBuffer.filter(BLUR, 2.5); // only background is blurred now
+  blurBuffer.image(bgImg, 0, 0, width, height); // draw bg
+
+  // draw text into buffer (will be blurred)
+  blurBuffer.fill(255, 235);
+  blurBuffer.noStroke();
+  let textBlockHeight = getTextBlockHeight(poeticLine, maxTextWidth);
+  let x = (width - maxTextWidth) / 2;
+  let y = (height - textBlockHeight) / 2;
+  blurBuffer.text(poeticLine, x, y, maxTextWidth);
+
+  blurBuffer.filter(BLUR, 2.5); // blur everything (text + bg)
 }
 
 function drawGlass(x, y) {
