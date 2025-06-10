@@ -25,21 +25,30 @@
     camera.position.z = 5;
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    // renderer.setClearColor(0x000000, 1); // Optional: black background behind the image
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Prevents blur on high DPI
     document.body.appendChild(renderer.domElement);
 
     // Load background image
     const loader = new THREE.TextureLoader();
-    const bgTexture = loader.load('https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', function(texture) {
-      // Calculate aspect ratio and scale the plane to fill the screen
-      const aspect = texture.image.width / texture.image.height;
+    loader.load('https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', function(texture) {
+      // Calculate aspect ratio and scale the plane to fit the viewport
+      const imageAspect = texture.image.width / texture.image.height;
+      const viewportAspect = window.innerWidth / window.innerHeight;
+      let bgWidth, bgHeight;
+      if (imageAspect > viewportAspect) {
+        // Image is wider than viewport: fit to width
+        bgWidth = 2 * viewportAspect;
+        bgHeight = 2;
+      } else {
+        // Image is taller than viewport: fit to height
+        bgWidth = 2 * imageAspect;
+        bgHeight = 2 * imageAspect / viewportAspect;
+      }
       const bgPlane = new THREE.Mesh(
-        new THREE.PlaneGeometry(2 * aspect, 2),
+        new THREE.PlaneGeometry(bgWidth, bgHeight),
         new THREE.MeshBasicMaterial({ map: texture })
       );
-      // Position the plane at z = -1 so it doesn't interfere with the glass
-      bgPlane.position.z = -1;
+      bgPlane.position.z = -1; // Behind everything
       scene.add(bgPlane);
     });
 
@@ -47,10 +56,8 @@
     const glassGeometry = new THREE.PlaneGeometry(1.5, 1.5);
     const glassMaterial = new THREE.ShaderMaterial({
       uniforms: {
-        uTexture: { value: bgTexture },
         uTime: { value: 0 },
-        uMouse: { value: new THREE.Vector2(0, 0) },
-        uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+        uMouse: { value: new THREE.Vector2(0, 0) }
       },
       vertexShader: `
         varying vec2 vUv;
@@ -61,34 +68,29 @@
       `,
       fragmentShader: `
         varying vec2 vUv;
-        uniform sampler2D uTexture;
         uniform float uTime;
         uniform vec2 uMouse;
-        uniform vec2 uResolution;
 
         void main() {
-          // Center UVs
           vec2 uv = vUv;
           vec2 center = vec2(0.5, 0.5);
           float dist = distance(uv, center);
           if (dist > 0.5) discard;
 
-          // Distortion
-          float distort = 0.2 * sin(uTime * 0.5) + 0.8;
+          // Simple distortion
           uv += (center - uv) * 0.1 * sin(dist * 10.0 + uTime);
-          vec4 tex = texture2D(uTexture, (uv - 0.5) * 2.0 * vec2(uResolution.x / uResolution.y, 1.0) + 0.5);
 
-          // Highlight (follows mouse/gyro)
-          vec2 mouseNorm = uMouse / uResolution;
+          // Highlight (follows mouse)
+          vec2 mouseNorm = uMouse / vec2(${window.innerWidth}, ${window.innerHeight});
           float highlight = smoothstep(0.4, 0.5, 1.0 - dot(normalize(uv - center), normalize(mouseNorm - center)));
           vec3 highlightColor = vec3(0.8, 0.9, 1.0) * highlight * 0.6;
-          tex.rgb = mix(tex.rgb, highlightColor, highlight * 0.6);
+          vec3 color = mix(vec3(0.2, 0.4, 0.8), highlightColor, highlight * 0.6);
 
           // Blur edge
           float blur = smoothstep(0.4, 0.5, dist);
-          tex.a = 0.8 * (1.0 - blur);
+          float alpha = 0.8 * (1.0 - blur);
 
-          gl_FragColor = tex;
+          gl_FragColor = vec4(color, alpha);
         }
       `,
       transparent: true
@@ -122,7 +124,7 @@
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
-      glassMaterial.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+      // You can re-add the background here if you want, but it's optional for this demo
     });
   </script>
 </body>
