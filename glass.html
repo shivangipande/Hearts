@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Liquid Glass Button</title>
+  <title>Apple Style Liquid Glass Button</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     body {
@@ -15,7 +15,6 @@
       align-items: center;
       min-height: 100vh;
       overflow: hidden;
-      cursor: default;
     }
     canvas {
       display: block;
@@ -54,28 +53,19 @@
         strokeWeight(2);
         line(0, y, width, y);
       }
-
-      fill(255, 255, 255, 200);
-      textAlign(CENTER, CENTER);
-      textSize(32);
-      text('Liquid Glass', width / 2, height / 2 + 100);
-      textSize(24);
-      fill(255, 255, 255, 150);
-      text('Drag to see blur & distortion', width / 2, height / 2 + 140);
     }
 
-    // --- Latest Optimized drawGlass Function ---
+    // drawGlass with blur underneath barrel distortion
     function drawGlass(x, y) {
       let baseSize = min(windowWidth, windowHeight) * 0.4;
       let size = constrain(baseSize, 140, 240);
       let radius = size / 2;
 
-      let captureMargin = 40;
-      let captureSize = size + captureMargin * 2;
-      let bg = get(x - captureSize / 2, y - captureSize / 2, captureSize, captureSize);
+      // Get background
+      let bg = get(x - radius, y - radius, size, size);
 
       drawingContext.save();
-      drawingContext.shadowColor = 'rgba(0,0,0,0.25)';
+      drawingContext.shadowColor = 'rgba(0, 0, 0, 0.25)';
       drawingContext.shadowBlur = 10;
       drawingContext.shadowOffsetX = 4;
       drawingContext.shadowOffsetY = 6;
@@ -91,13 +81,15 @@
       ctx.arc(x, y, radius, 0, TWO_PI);
       ctx.clip();
 
-      ctx.filter = 'blur(10px) saturate(1.1)';
-      ctx.globalAlpha = 0.35;
-      image(bg, x - captureSize / 2, y - captureSize / 2);
+      // Blurred background frosting layer
+      ctx.filter = 'blur(12px) saturate(1.05)';
+      ctx.globalAlpha = 0.5;
+      image(bg, x - radius, y - radius);
       ctx.filter = 'none';
       ctx.globalAlpha = 1.0;
 
-      let step = windowWidth < 600 ? 2 : 1;
+      // Barrel distortion
+      let step = windowWidth < 600 ? 1 : 0.5;
       for (let px = 0; px < size; px += step) {
         for (let py = 0; py < size; py += step) {
           let cx = size / 2;
@@ -109,14 +101,14 @@
             let distortion = 1 + k1 * nd * nd;
             let angle = atan2(py - cy, px - cx);
             let sd = d / distortion;
-            let sx = cx + cos(angle) * sd + captureMargin;
-            let sy = cy + sin(angle) * sd + captureMargin;
+            let sx = cx + cos(angle) * sd;
+            let sy = cy + sin(angle) * sd;
             sx = constrain(sx, 0, bg.width - 1);
             sy = constrain(sy, 0, bg.height - 1);
             let c = bg.get(sx, sy);
 
             if (nd > 0.9 && windowWidth > 600) {
-              let ab = (nd - 0.9) * 0.1;
+              let ab = (nd - 0.9) * 0.05;
               let rc = bg.get(constrain(sx + ab, 0, bg.width - 1), sy);
               let bc = bg.get(constrain(sx - ab, 0, bg.width - 1), sy);
               fill(red(rc), green(c), blue(bc), 160);
@@ -132,6 +124,7 @@
 
       ctx.restore();
 
+      // Subtle internal light specks
       for (let i = 0; i < 20; i++) {
         let angle = random(TWO_PI);
         let r = random(radius);
@@ -142,6 +135,7 @@
         circle(nx, ny, random(0.2, 0.7));
       }
 
+      // Spectral edge
       let mouseAngle = atan2(mouseY - y, mouseX - x);
       drawCircleSpectralEdge(x, y, radius, mouseAngle);
 
