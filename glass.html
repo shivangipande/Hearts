@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Apple Liquid Himbo Orb</title>
+  <title>Himbo Orb x Apple Centered Fix</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -26,6 +26,7 @@ let bgImg, distortionSize;
 let blurBuffer, distorted;
 let bgLoaded = false;
 let poeticLine = "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical — a tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.";
+let maxTextWidth;
 
 function preload() {
   bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=1200&auto=format&fit=crop");
@@ -35,7 +36,7 @@ function setup() {
   pixelDensity(1.5);
   createCanvas(windowWidth, windowHeight);
   textFont("-apple-system");
-  textAlign(CENTER, CENTER);
+  textAlign(LEFT, TOP); // we’ll manually center it now
   setResponsiveText();
 
   buttonX = width / 2;
@@ -44,7 +45,7 @@ function setup() {
 
   blurBuffer = createGraphics(width, height);
   blurBuffer.textFont("-apple-system");
-  blurBuffer.textAlign(CENTER, CENTER);
+  blurBuffer.textAlign(LEFT, TOP);
   setResponsiveText(blurBuffer);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
 
@@ -55,27 +56,29 @@ function setup() {
 
 function draw() {
   if (!bgLoaded) return;
-
-  // draw blurred buffer behind
   image(blurBuffer, 0, 0);
-
-  // draw orb
   drawGlass(buttonX, buttonY);
+  drawCleanText();
+}
 
-  // draw sharp text clean on top
+function drawCleanText() {
   fill(255, 235);
   noStroke();
-  textLeading(textSize() * 1.2);
-  text(poeticLine, width / 2, height / 2, width * 0.85);
+  let textBlockHeight = getTextBlockHeight(poeticLine, maxTextWidth);
+  let x = (width - maxTextWidth) / 2;
+  let y = (height - textBlockHeight) / 2;
+  text(poeticLine, x, y, maxTextWidth);
 }
 
 function drawBlurBuffer() {
   blurBuffer.clear();
-  blurBuffer.image(bgImg, 0, 0, width, height); // cover
+  blurBuffer.image(bgImg, 0, 0, width, height);
   blurBuffer.fill(255, 235);
   blurBuffer.noStroke();
-  blurBuffer.textLeading(textSize() * 1.2);
-  blurBuffer.text(poeticLine, width / 2, height / 2, width * 0.85);
+  let textBlockHeight = getTextBlockHeight(poeticLine, maxTextWidth);
+  let x = (width - maxTextWidth) / 2;
+  let y = (height - textBlockHeight) / 2;
+  blurBuffer.text(poeticLine, x, y, maxTextWidth);
   blurBuffer.filter(BLUR, 2.5);
 }
 
@@ -145,6 +148,22 @@ function drawCircleEdge(cx, cy, radius) {
   ctx.filter = 'none';
 }
 
+function getTextBlockHeight(txt, w) {
+  let words = txt.split(' ');
+  let line = '';
+  let lines = 1;
+  for (let i = 0; i < words.length; i++) {
+    let testLine = line + words[i] + ' ';
+    if (textWidth(testLine) > w) {
+      lines++;
+      line = words[i] + ' ';
+    } else {
+      line = testLine;
+    }
+  }
+  return lines * textLeading(); // estimated height
+}
+
 function mousePressed() {
   if (dist(mouseX, mouseY, buttonX, buttonY) < distortionSize / 2) {
     isDragging = true;
@@ -171,7 +190,7 @@ function windowResized() {
 
   blurBuffer = createGraphics(width, height);
   blurBuffer.textFont("-apple-system");
-  blurBuffer.textAlign(CENTER, CENTER);
+  blurBuffer.textAlign(LEFT, TOP);
   setResponsiveText(blurBuffer);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
   if (bgLoaded) drawBlurBuffer();
@@ -179,11 +198,14 @@ function windowResized() {
 
 function setResponsiveText(target) {
   let base = min(windowWidth, windowHeight);
-  let fontSize = constrain(base * 0.045, 16, 80); // sweet spot
+  let fontSize = constrain(base * 0.045, 16, 80);
+  maxTextWidth = width * 0.85;
   if (target) {
     target.textSize(fontSize);
+    target.textLeading(fontSize * 1.2);
   } else {
     textSize(fontSize);
+    textLeading(fontSize * 1.2);
   }
 }
 </script>
