@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apple Liquid Glass Button (Optimized)</title>
+  <title>Apple Liquid Glass Button (Final Himbo Edition)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -15,41 +15,18 @@
     canvas {
       display: block;
     }
-    #poetic-line {
-      position: absolute;
-      bottom: 40px;
-      width: 100%;
-      text-align: center;
-      font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Helvetica Neue", sans-serif;
-      font-size: clamp(16px, 2vw, 24px);
-      color: rgba(255, 255, 255, 0.85);
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-      padding: 0 20px;
-      line-height: 1.6;
-      pointer-events: none;
-      opacity: 0;
-      animation: fadeIn 2s ease 1.5s forwards;
-    }
-
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
   </style>
 </head>
 <body>
-<div id="poetic-line">
-  Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical — a tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.
-</div>
-
 <script>
 let buttonX, buttonY;
 let isDragging = false;
 let offsetX = 0, offsetY = 0;
 let bgImg;
-let gyroAngle = 0;
 let distortionSize;
 let blurBuffer;
 let distorted;
+let poeticLine = "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical — a tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.";
 
 function preload() {
   bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
@@ -58,14 +35,14 @@ function preload() {
 function setup() {
   pixelDensity(1.5);
   createCanvas(windowWidth, windowHeight);
+  textFont('-apple-system, BlinkMacSystemFont, "San Francisco", "Helvetica Neue", sans-serif');
+  textSize(min(width, height) * 0.02);
+  textAlign(CENTER, CENTER);
   buttonX = width / 2;
   buttonY = height / 2;
   distortionSize = min(width, height) * 0.4;
   blurBuffer = createGraphics(width, height);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
-
-  blurBuffer.image(bgImg, 0, 0, width, height);
-  blurBuffer.filter(BLUR, 2.5);
 
   if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
     DeviceOrientationEvent.requestPermission().then(response => {
@@ -78,13 +55,30 @@ function setup() {
   }
 }
 
-function handleGyro(e) {
-  gyroAngle = radians(e.gamma || 0);
-}
-
 function draw() {
+  // Draw background and poetic line into blurBuffer
+  blurBuffer.image(bgImg, 0, 0, width, height);
+  blurBuffer.fill(255, 230);
+  blurBuffer.noStroke();
+  blurBuffer.textSize(min(width, height) * 0.02);
+  blurBuffer.textAlign(CENTER, CENTER);
+  blurBuffer.textLeading(min(width, height) * 0.035);
+  blurBuffer.text(poeticLine, width / 2, height - 80, width * 0.85);
+
+  // Apply blur
+  blurBuffer.filter(BLUR, 2.5);
+
+  // Draw background
   image(bgImg, 0, 0, width, height);
   drawGlass(buttonX, buttonY);
+
+  // Draw text again for clarity on top
+  fill(255, 230);
+  noStroke();
+  textSize(min(width, height) * 0.02);
+  textAlign(CENTER, CENTER);
+  textLeading(min(width, height) * 0.035);
+  text(poeticLine, width / 2, height - 80, width * 0.85);
 }
 
 function drawGlass(x, y) {
@@ -95,8 +89,8 @@ function drawGlass(x, y) {
   buffer.loadPixels();
   distorted.loadPixels();
 
-  for (let py = 0; py < d; py += 1) {
-    for (let px = 0; px < d; px += 1) {
+  for (let py = 0; py < d; py++) {
+    for (let px = 0; px < d; px++) {
       let dx = px - r;
       let dy = py - r;
       let distSqr = dx * dx + dy * dy;
@@ -137,7 +131,6 @@ function drawGlass(x, y) {
 function drawCircleEdge(cx, cy, radius) {
   let ctx = drawingContext;
   let mouseAngle = atan2(mouseY - cx, mouseX - cx);
-
   let gx1 = cx + cos(mouseAngle) * 120;
   let gy1 = cy + sin(mouseAngle) * 120;
   let gx2 = cx + cos(mouseAngle + PI) * 120;
@@ -155,6 +148,10 @@ function drawCircleEdge(cx, cy, radius) {
   ctx.arc(cx, cy, radius, 0, TWO_PI);
   ctx.stroke();
   ctx.filter = 'none';
+}
+
+function handleGyro(e) {
+  // Optional: you can tie gyro to distortion for depth later
 }
 
 function mousePressed() {
@@ -180,8 +177,6 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   distortionSize = min(width, height) * 0.4;
   blurBuffer = createGraphics(width, height);
-  blurBuffer.image(bgImg, 0, 0, width, height);
-  blurBuffer.filter(BLUR, 2.5);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
 }
 </script>
