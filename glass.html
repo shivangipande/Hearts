@@ -25,6 +25,7 @@ let bgImg;
 let gyroAngle = 0;
 let distortionSize;
 let blurBuffer;
+let distorted;
 
 function preload() {
   bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
@@ -37,6 +38,10 @@ function setup() {
   buttonY = height / 2;
   distortionSize = min(width, height) * 0.4;
   blurBuffer = createGraphics(width, height);
+  distorted = createImage(floor(distortionSize), floor(distortionSize));
+
+  blurBuffer.image(bgImg, 0, 0, width, height);
+  blurBuffer.filter(BLUR, 2.5);
 
   if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
     DeviceOrientationEvent.requestPermission().then(response => {
@@ -55,8 +60,6 @@ function handleGyro(e) {
 
 function draw() {
   image(bgImg, 0, 0, width, height);
-  blurBuffer.image(bgImg, 0, 0, width, height);
-  blurBuffer.filter(BLUR, 3);
   drawGlass(buttonX, buttonY);
 }
 
@@ -66,29 +69,28 @@ function drawGlass(x, y) {
   let buffer = blurBuffer.get(x - r, y - r, d, d);
 
   buffer.loadPixels();
-  let distorted = createImage(d, d);
   distorted.loadPixels();
 
-  for (let px = 0; px < d; px++) {
-    for (let py = 0; py < d; py++) {
+  for (let py = 0; py < d; py += 1) {
+    for (let px = 0; px < d; px += 1) {
       let dx = px - r;
       let dy = py - r;
-      let distFromCenter = sqrt(dx * dx + dy * dy);
-      let di = (px + py * d) * 4;
-      if (distFromCenter <= r) {
-        let norm = distFromCenter / r;
+      let distSqr = dx * dx + dy * dy;
+      let i = (px + py * d) * 4;
+      if (distSqr <= r * r) {
+        let norm = sqrt(distSqr) / r;
         let k = 0.2;
         let factor = 1 + k * norm * norm;
         let sx = constrain(r + dx / factor, 0, d - 1);
         let sy = constrain(r + dy / factor, 0, d - 1);
         let si = (int(sx) + int(sy) * d) * 4;
 
-        distorted.pixels[di] = buffer.pixels[si];
-        distorted.pixels[di + 1] = buffer.pixels[si + 1];
-        distorted.pixels[di + 2] = buffer.pixels[si + 2];
-        distorted.pixels[di + 3] = 220;
+        distorted.pixels[i] = buffer.pixels[si];
+        distorted.pixels[i + 1] = buffer.pixels[si + 1];
+        distorted.pixels[i + 2] = buffer.pixels[si + 2];
+        distorted.pixels[i + 3] = 220;
       } else {
-        distorted.pixels[di + 3] = 0;
+        distorted.pixels[i + 3] = 0;
       }
     }
   }
@@ -152,6 +154,9 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   distortionSize = min(width, height) * 0.4;
   blurBuffer = createGraphics(width, height);
+  blurBuffer.image(bgImg, 0, 0, width, height);
+  blurBuffer.filter(BLUR, 2.5);
+  distorted = createImage(floor(distortionSize), floor(distortionSize));
 }
 </script>
 </body>
