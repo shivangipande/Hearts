@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apple Liquid Glass Button (Enhanced)</title>
+  <title>Apple Liquid Glass (Ultimate Demo)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -30,6 +30,9 @@ let distortionSize;
 let blurBuffer;
 let time = 0;
 let isDarkMode = true;
+let reducedMotion = false;
+let reducedTransparency = false;
+let increasedContrast = false;
 
 function preload() {
   bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
@@ -43,11 +46,22 @@ function setup() {
   distortionSize = Math.min(width, height) * 0.4;
   blurBuffer = createGraphics(width, height);
   blurBuffer.image(bgImg, 0, 0, width, height);
-  blurBuffer.filter(BLUR, 8); // Stronger blur for Apple effect
-  // Optional: Check system theme
+  blurBuffer.filter(BLUR, 8);
+
+  // Detect system preferences
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
     isDarkMode = false;
   }
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    reducedMotion = true;
+  }
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-transparency: reduce)').matches) {
+    reducedTransparency = true;
+  }
+  if (window.matchMedia && window.matchMedia('(prefers-contrast: more)').matches) {
+    increasedContrast = true;
+  }
+
   // Device orientation
   if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
     DeviceOrientationEvent.requestPermission().then(response => {
@@ -67,7 +81,7 @@ function handleGyro(e) {
 function draw() {
   image(bgImg, 0, 0, width, height);
   drawGlass(buttonX, buttonY);
-  time += 0.05;
+  time += reducedMotion ? 0.01 : 0.05;
 }
 
 function drawGlass(x, y) {
@@ -87,7 +101,7 @@ function drawGlass(x, y) {
       let di = (px + py * d) * 4;
       if (distFromCenter <= r) {
         let norm = distFromCenter / r;
-        let k = 0.3; // Stronger distortion for Apple effect
+        let k = 0.3;
         let factor = 1 + k * norm * norm;
         let sx = constrain(r + dx / factor, 0, d - 1);
         let sy = constrain(r + dy / factor, 0, d - 1);
@@ -96,7 +110,7 @@ function drawGlass(x, y) {
         distorted.pixels[di] = buffer.pixels[si];
         distorted.pixels[di + 1] = buffer.pixels[si + 1];
         distorted.pixels[di + 2] = buffer.pixels[si + 2];
-        distorted.pixels[di + 3] = 180; // More translucent
+        distorted.pixels[di + 3] = reducedTransparency ? 255 : 180;
       } else {
         distorted.pixels[di + 3] = 0;
       }
@@ -111,10 +125,21 @@ function drawGlass(x, y) {
   image(distorted, x - r, y - r);
   drawingContext.restore();
 
-  drawCircleEdge(x, y, r, isDarkMode);
+  drawCircleEdge(x, y, r, isDarkMode, increasedContrast);
+
+  // Subtle drop shadow for depth
+  drawingContext.save();
+  drawingContext.beginPath();
+  drawingContext.arc(x, y, r, 0, TWO_PI);
+  drawingContext.shadowColor = 'rgba(0,0,0,0.2)';
+  drawingContext.shadowBlur = 20;
+  drawingContext.shadowOffsetY = 10;
+  drawingContext.fillStyle = 'transparent';
+  drawingContext.fill();
+  drawingContext.restore();
 }
 
-function drawCircleEdge(cx, cy, radius, darkMode) {
+function drawCircleEdge(cx, cy, radius, darkMode, highContrast) {
   let ctx = drawingContext;
   let highlightAngle;
   if (mouseX > 0 && mouseY > 0 && dist(mouseX, mouseY, cx, cy) < radius * 1.5) {
@@ -122,19 +147,25 @@ function drawCircleEdge(cx, cy, radius, darkMode) {
   } else {
     highlightAngle = gyroAngle;
   }
-  highlightAngle += 0.2 * sin(time);
+  if (!reducedMotion) {
+    highlightAngle += 0.2 * sin(time);
+  }
 
   let gx1 = cx + Math.cos(highlightAngle) * 120;
   let gy1 = cy + Math.sin(highlightAngle) * 120;
   let gx2 = cx + Math.cos(highlightAngle + PI) * 120;
   let gy2 = cy + Math.sin(highlightAngle + PI) * 120;
 
-  let highlightColor = darkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.9)';
-  let edgeColor = darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)';
+  let highlightColor = highContrast ? 
+    (darkMode ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)') :
+    (darkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.9)');
+  let edgeColor = highContrast ?
+    (darkMode ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)') :
+    (darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)');
 
   // Edge glow
   ctx.strokeStyle = edgeColor;
-  ctx.lineWidth = 6;
+  ctx.lineWidth = highContrast ? 8 : 6;
   ctx.filter = 'blur(8px)';
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, TWO_PI);
@@ -148,8 +179,8 @@ function drawCircleEdge(cx, cy, radius, darkMode) {
   gradient.addColorStop(1, darkMode ? 'rgba(150, 255, 255, 0)' : 'rgba(200, 255, 255, 0)');
 
   ctx.strokeStyle = gradient;
-  ctx.lineWidth = 2;
-  ctx.filter = 'blur(1px)';
+  ctx.lineWidth = highContrast ? 4 : 2;
+  ctx.filter = reducedMotion ? 'none' : 'blur(1px)';
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, TWO_PI);
   ctx.stroke();
