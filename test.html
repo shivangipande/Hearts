@@ -77,8 +77,8 @@ function drawTextCenteredBox(gfx, title, body, centerX, centerY, boxWidth, boxHe
   let bodyLines = splitIntoLines(gfx, body, bodySize, boxWidth);
 
   // Calculate total height for vertical centering
-  // Title takes one line, gap is one line of title height, body takes bodyLines.length lines
-  let totalHeight = titleLineHeight + titleLineHeight + (bodyLines.length * bodyLineHeight);
+  // Title takes one line, gap is 30% of titleLineHeight, body takes bodyLines.length lines
+  let totalHeight = titleLineHeight + (titleLineHeight * 0.3) + (bodyLines.length * bodyLineHeight);
   let startY = centerY - (totalHeight / 2);
 
   // Draw title (faux bold by drawing twice with offset)
@@ -87,10 +87,10 @@ function drawTextCenteredBox(gfx, title, body, centerX, centerY, boxWidth, boxHe
   gfx.text(title, centerX + 1, startY + titleLineHeight/2);
   gfx.text(title, centerX, startY + titleLineHeight/2);
 
-  // Draw body lines (start after title + one line of title height as gap)
+  // Draw body lines (start after title + 30% of titleLineHeight as gap)
   gfx.textSize(bodySize);
   gfx.textLeading(bodyLineHeight);
-  let bodyStartY = startY + titleLineHeight + titleLineHeight;
+  let bodyStartY = startY + titleLineHeight + (titleLineHeight * 0.3);
   for (let i = 0; i < bodyLines.length; i++) {
     gfx.text(bodyLines[i], centerX, bodyStartY + (i * bodyLineHeight));
   }
