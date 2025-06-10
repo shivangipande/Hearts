@@ -55,12 +55,12 @@ function updateBlurBuffer() {
   // Draw centered text into the blur buffer (so it gets blurred under glass)
   blurBuffer.push();
   blurBuffer.textAlign(CENTER, CENTER);
-  blurBuffer.textSize(min(width, height) * 0.05); // Responsive font size
+  blurBuffer.textSize(min(width, height) * 0.05);
   blurBuffer.textFont('system-ui');
   blurBuffer.fill(255);
   let margin = width * 0.1;
   let boxWidth = width - margin * 2;
-  let boxHeight = height * 0.8; // Use most of the height for text box
+  let boxHeight = height * 0.8;
   blurBuffer.text(mainText, width/2, height/2, boxWidth, boxHeight);
   blurBuffer.pop();
 
@@ -83,13 +83,15 @@ function draw() {
   // Draw crisp, centered text on main canvas
   push();
   textAlign(CENTER, CENTER);
-  textSize(min(width, height) * 0.05); // Responsive font size
+  textSize(min(width, height) * 0.05);
   textFont('system-ui');
   fill(255);
   let margin = width * 0.1;
   let boxWidth = width - margin * 2;
-  let boxHeight = height * 0.8; // Use most of the height for text box
-  text(mainText, width/2, height/2, boxWidth, boxHeight);
+  let boxHeight = height * 0.8;
+  // Optional: Adjust y position if still not visually centered
+  let yOffset = -min(width, height) * 0.05 / 12;
+  text(mainText, width/2, height/2 + yOffset, boxWidth, boxHeight);
   pop();
 
   // Draw glass button (samples from blurred buffer, which includes blurred text)
@@ -196,3 +198,4 @@ function windowResized() {
 </script>
 </body>
 </html>
+
