@@ -6,7 +6,7 @@
   <title>Apple Liquid Glass Button (Optimized)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
-    body {
+    html, body {
       margin: 0;
       padding: 0;
       overflow: hidden;
@@ -20,111 +20,101 @@
 <script>
 let buttonX, buttonY;
 let isDragging = false;
-let offsetX, offsetY;
-let backgroundImage;
+let offsetX = 0, offsetY = 0;
+let bgImg;
+let buffer;
+let gyroAngle = 0;
 
 function preload() {
-  backgroundImage = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+  bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
 }
 
 function setup() {
-  pixelDensity(window.devicePixelRatio > 2 ? 1.5 : 1);
+  pixelDensity(1.5);
   createCanvas(windowWidth, windowHeight);
+  frameRate(30);
+  buffer = createGraphics(300, 300);
   buttonX = width / 2;
   buttonY = height / 2;
+
+  if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+    DeviceOrientationEvent.requestPermission().then(response => {
+      if (response === 'granted') {
+        window.addEventListener('deviceorientation', handleGyro);
+      }
+    });
+  } else {
+    window.addEventListener('deviceorientation', handleGyro);
+  }
+}
+
+function handleGyro(e) {
+  gyroAngle = radians(e.gamma || 0); // horizontal tilt for edge glow
 }
 
 function draw() {
-  image(backgroundImage, 0, 0, width, height);
+  background(0);
+  image(bgImg, 0, 0, width, height);
   drawGlass(buttonX, buttonY);
 }
 
 function drawGlass(x, y) {
   let size = min(width, height) * 0.4;
   let radius = size / 2;
-  let ctx = drawingContext;
+  buffer.clear();
 
-  // Shadow
-  ctx.save();
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
-  ctx.shadowBlur = 10;
-  ctx.shadowOffsetX = 4;
-  ctx.shadowOffsetY = 6;
-  stroke(0, 0, 0, 40);
-  strokeWeight(2);
-  noFill();
-  circle(x, y, size);
-  ctx.restore();
+  // Draw blurred background
+  buffer.image(bgImg, -x + buffer.width / 2, -y + buffer.height / 2, width, height);
+  buffer.drawingContext.filter = 'blur(10px)';
+  buffer.image(buffer, 0, 0); // Apply blur to buffer itself
+  buffer.drawingContext.filter = 'none';
 
-  let bgSample = get(x - radius - 40, y - radius - 40, size + 80, size + 80);
+  loadPixels();
+  buffer.loadPixels();
 
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, TWO_PI);
-  ctx.clip();
+  // Barrel distortion in buffer
+  for (let px = 0; px < buffer.width; px += 2) {
+    for (let py = 0; py < buffer.height; py += 2) {
+      let dx = px - buffer.width / 2;
+      let dy = py - buffer.height / 2;
+      let dist = sqrt(dx * dx + dy * dy);
+      if (dist < radius) {
+        let norm = dist / radius;
+        let factor = 1 + 0.2 * norm * norm;
+        let sx = buffer.width / 2 + dx / factor;
+        let sy = buffer.height / 2 + dy / factor;
 
-  // Apply blur
-  ctx.filter = 'blur(10px) saturate(1.1) brightness(1.04)';
-  image(bgSample, x - radius - 40, y - radius - 40);
-  ctx.filter = 'none';
-
-  // Barrel distortion (low resolution for performance)
-  for (let px = 0; px < size; px += 2) {
-    for (let py = 0; py < size; py += 2) {
-      let centerX = size / 2;
-      let centerY = size / 2;
-      let distFromCenter = dist(px, py, centerX, centerY);
-      if (distFromCenter <= radius) {
-        let normalizedDist = distFromCenter / radius;
-        let k1 = 0.2;
-        let distortion = 1 + k1 * normalizedDist * normalizedDist;
-        let angleToCenter = atan2(py - centerY, px - centerX);
-        let sourceDistance = distFromCenter / distortion;
-        let sourceX = centerX + cos(angleToCenter) * sourceDistance + 40;
-        let sourceY = centerY + sin(angleToCenter) * sourceDistance + 40;
-        sourceX = constrain(sourceX, 0, bgSample.width - 1);
-        sourceY = constrain(sourceY, 0, bgSample.height - 1);
-        let baseColor = bgSample.get(sourceX, sourceY);
-        fill(red(baseColor), green(baseColor), blue(baseColor), 170);
+        let col = buffer.get(sx, sy);
+        fill(col[0], col[1], col[2], 180);
         noStroke();
         rect(x - radius + px, y - radius + py, 2, 2);
       }
     }
   }
 
-  ctx.restore();
-
-  // Sparkle noise
-  for (let i = 0; i < 20; i++) {
-    let angle = random(TWO_PI);
-    let r = random(radius);
-    let nx = x + cos(angle) * r;
-    let ny = y + sin(angle) * r;
-    fill(255, 255, 255, random(3, 10));
-    noStroke();
-    circle(nx, ny, random(0.5, 1.2));
-  }
-
-  // Edge highlight
+  // Circle edge glow
   drawCircleEdge(x, y, radius);
+
+  // Outer ring
   stroke(255, 255, 255, 50);
-  strokeWeight(0.5);
+  strokeWeight(0.6);
   noFill();
   circle(x, y, size);
 }
 
 function drawCircleEdge(cx, cy, radius) {
   let ctx = drawingContext;
-  let angle = atan2(mouseY - cy, mouseX - cx);
-  let gx1 = cx + cos(angle) * 120;
-  let gy1 = cy + sin(angle) * 120;
-  let gx2 = cx + cos(angle + PI) * 120;
-  let gy2 = cy + sin(angle + PI) * 120;
-  let spectral = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
-  spectral.addColorStop(0, 'rgba(255, 150, 255, 0)');
-  spectral.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
-  spectral.addColorStop(1, 'rgba(150, 255, 255, 0)');
-  ctx.strokeStyle = spectral;
+  let gx1 = cx + cos(gyroAngle) * 120;
+  let gy1 = cy + sin(gyroAngle) * 120;
+  let gx2 = cx + cos(gyroAngle + PI) * 120;
+  let gy2 = cy + sin(gyroAngle + PI) * 120;
+
+  let gradient = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
+  gradient.addColorStop(0, 'rgba(255, 150, 255, 0)');
+  gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
+  gradient.addColorStop(1, 'rgba(150, 255, 255, 0)');
+
+  ctx.strokeStyle = gradient;
   ctx.lineWidth = 2;
   ctx.filter = 'blur(1px)';
   ctx.beginPath();
@@ -134,8 +124,8 @@ function drawCircleEdge(cx, cy, radius) {
 }
 
 function mousePressed() {
-  let size = min(width, height) * 0.4;
-  if (dist(mouseX, mouseY, buttonX, buttonY) < size / 2) {
+  let d = dist(mouseX, mouseY, buttonX, buttonY);
+  if (d < min(width, height) * 0.2) {
     isDragging = true;
     offsetX = mouseX - buttonX;
     offsetY = mouseY - buttonY;
@@ -144,8 +134,8 @@ function mousePressed() {
 
 function mouseDragged() {
   if (isDragging) {
-    buttonX = constrain(mouseX - offsetX, 100, width - 100);
-    buttonY = constrain(mouseY - offsetY, 100, height - 100);
+    buttonX = constrain(mouseX - offsetX, 60, width - 60);
+    buttonY = constrain(mouseY - offsetY, 60, height - 60);
   }
 }
 
