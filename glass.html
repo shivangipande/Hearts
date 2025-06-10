@@ -10,13 +10,37 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
+      background-color: black;
     }
     canvas {
       display: block;
     }
+    #poetic-line {
+      position: absolute;
+      bottom: 40px;
+      width: 100%;
+      text-align: center;
+      font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Helvetica Neue", sans-serif;
+      font-size: clamp(16px, 2vw, 24px);
+      color: rgba(255, 255, 255, 0.85);
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+      padding: 0 20px;
+      line-height: 1.6;
+      pointer-events: none;
+      opacity: 0;
+      animation: fadeIn 2s ease 1.5s forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
   </style>
 </head>
 <body>
+<div id="poetic-line">
+  Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical — a tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.
+</div>
+
 <script>
 let buttonX, buttonY;
 let isDragging = false;
@@ -112,7 +136,7 @@ function drawGlass(x, y) {
 
 function drawCircleEdge(cx, cy, radius) {
   let ctx = drawingContext;
-  let mouseAngle = atan2(mouseY - cy, mouseX - cx);
+  let mouseAngle = atan2(mouseY - cx, mouseX - cx);
 
   let gx1 = cx + cos(mouseAngle) * 120;
   let gy1 = cy + sin(mouseAngle) * 120;
