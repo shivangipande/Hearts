@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Glass Circle with Centered Text</title>
+  <title>Glass Effect with Centered, Responsive Text</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -53,10 +53,10 @@ function updateBlurBuffer() {
   blurBuffer.clear();
   blurBuffer.image(bgImg, 0, 0, width, height);
 
-  // Draw the centered text into the blur buffer (so it gets blurred under glass)
+  // Draw centered text into the blur buffer (so it gets blurred under glass)
   blurBuffer.push();
   blurBuffer.textAlign(CENTER, CENTER);
-  blurBuffer.textSize(min(width, height) * 0.05); // Responsive text size
+  blurBuffer.textSize(min(width, height) * 0.05); // Responsive font size
   blurBuffer.textFont('system-ui');
   blurBuffer.fill(255);
   let margin = width * 0.1;
@@ -83,7 +83,7 @@ function draw() {
   // Draw crisp, centered text on main canvas
   push();
   textAlign(CENTER, CENTER);
-  textSize(min(width, height) * 0.05); // Responsive text size
+  textSize(min(width, height) * 0.05); // Responsive font size
   textFont('system-ui');
   fill(255);
   let margin = width * 0.1;
