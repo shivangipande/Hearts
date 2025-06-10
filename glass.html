@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Apple Glass Gyro</title>
+  <title>Apple Glass Barrel + Gyro</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -53,7 +53,10 @@ function drawGlass(x, y) {
   let baseSize = min(windowWidth, windowHeight) * 0.4;
   let size = constrain(baseSize, 140, 240);
   let radius = size / 2;
+
+  // Get region under glass
   let bg = macBackground.get(x - radius, y - radius, size, size);
+  bg.loadPixels();
 
   let ctx = drawingContext;
   ctx.save();
@@ -61,16 +64,17 @@ function drawGlass(x, y) {
   ctx.arc(x, y, radius, 0, TWO_PI);
   ctx.clip();
 
+  // Blur layer
   ctx.filter = 'blur(8px) saturate(1.05)';
   ctx.globalAlpha = 0.4;
   image(bg, x - radius, y - radius);
   ctx.filter = 'none';
   ctx.globalAlpha = 1.0;
 
+  // Barrel distortion layer
   let step = windowWidth < 600 ? 1.2 : 0.8;
   let cx = size / 2;
   let cy = size / 2;
-  bg.loadPixels();
 
   for (let px = 0; px < size; px += step) {
     for (let py = 0; py < size; py += step) {
@@ -87,6 +91,7 @@ function drawGlass(x, y) {
         let sxInt = floor(sx);
         let syInt = floor(sy);
         let index = 4 * (sxInt + syInt * bg.width);
+
         let r = bg.pixels[index] || 255;
         let g = bg.pixels[index + 1] || 255;
         let b = bg.pixels[index + 2] || 255;
@@ -108,20 +113,15 @@ function drawGlass(x, y) {
 
   ctx.restore();
 
-  // Spectral edge with mouse or gyro
+  // Spectral edge: desktop = mouse, mobile = gyro
   let spectralAngle = (windowWidth < 600) ? gyroAngle : atan2(mouseY - y, mouseX - x);
   drawCircleSpectralEdge(x, y, radius, spectralAngle);
 
-  drawingContext.save();
-  drawingContext.shadowColor = 'rgba(0,0,0,0.15)';
-  drawingContext.shadowBlur = 5;
-  drawingContext.shadowOffsetX = 2;
-  drawingContext.shadowOffsetY = 3;
+  // Clean edge
   stroke(255, 255, 255, 60);
-  strokeWeight(1);
+  strokeWeight(0.5);
   noFill();
   circle(x, y, size);
-  drawingContext.restore();
 }
 
 function drawCircleSpectralEdge(cx, cy, r, angle) {
