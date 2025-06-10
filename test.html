@@ -14,7 +14,6 @@
     }
     canvas {
       display: block;
-      margin: 0 auto;
     }
   </style>
 </head>
@@ -61,7 +60,8 @@ function updateBlurBuffer() {
   blurBuffer.fill(255);
   let margin = width * 0.1;
   let boxWidth = width - margin * 2;
-  blurBuffer.text(mainText, width/2, height/2, boxWidth, height);
+  let boxHeight = height * 0.8; // Use most of the height for text box
+  blurBuffer.text(mainText, width/2, height/2, boxWidth, boxHeight);
   blurBuffer.pop();
 
   blurBuffer.filter(BLUR, 2.5);
@@ -88,7 +88,8 @@ function draw() {
   fill(255);
   let margin = width * 0.1;
   let boxWidth = width - margin * 2;
-  text(mainText, width/2, height/2, boxWidth, height);
+  let boxHeight = height * 0.8; // Use most of the height for text box
+  text(mainText, width/2, height/2, boxWidth, boxHeight);
   pop();
 
   // Draw glass button (samples from blurred buffer, which includes blurred text)
