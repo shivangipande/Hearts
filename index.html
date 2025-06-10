@@ -1089,27 +1089,51 @@
         }
         
         function handleTouchStart(event) {
-            event.preventDefault();
             let touch = event.touches[0];
             let rect = event.target.getBoundingClientRect();
             let touchX = touch.clientX - rect.left;
             let touchY = touch.clientY - rect.top;
             
-            checkAnimalHover(touchX, touchY, event);
+            // Check if touch is over an animal before preventing default
+            let touchedAnimal = null;
+            for (let animal of visibleAnimals) {
+                let distance = dist(touchX, touchY, animal.x, animal.y);
+                let baseSize = animal.displaySize || animal.size;
+                
+                if (distance < baseSize + 15) {
+                    touchedAnimal = animal;
+                    break;
+                }
+            }
+            
+            // Only prevent default if touching an animal
+            if (touchedAnimal) {
+                event.preventDefault();
+                checkAnimalHover(touchX, touchY, event);
+            }
         }
         
         function handleTouchMove(event) {
-            event.preventDefault();
             let touch = event.touches[0];
             let rect = event.target.getBoundingClientRect();
             let touchX = touch.clientX - rect.left;
             let touchY = touch.clientY - rect.top;
             
-            checkAnimalHover(touchX, touchY, event);
+            // Check if we're currently hovering over an animal
+            if (hoveredAnimal) {
+                event.preventDefault(); // Only prevent scrolling when actively interacting with an animal
+                checkAnimalHover(touchX, touchY, event);
+            } else {
+                // Allow normal scrolling when not interacting with animals
+                checkAnimalHover(touchX, touchY, event);
+            }
         }
         
         function handleTouchEnd(event) {
-            event.preventDefault();
+            // Only prevent default if we were interacting with an animal
+            if (hoveredAnimal) {
+                event.preventDefault();
+            }
             hideTooltip();
         }
         
