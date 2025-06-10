@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apple Liquid Glass (Fixed Background)</title>
+  <title>Apple Liquid Glass Button (Optimized)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background-color: #000;
     }
     canvas {
       display: block;
@@ -17,115 +17,149 @@
   </style>
 </head>
 <body>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script>
-    // Setup scene, camera, renderer
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 5;
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Prevents blur on high DPI
-    document.body.appendChild(renderer.domElement);
+<script>
+let buttonX, buttonY;
+let isDragging = false;
+let offsetX = 0, offsetY = 0;
+let bgImg;
+let gyroAngle = 0;
+let distortionSize;
+let blurBuffer;
+let distorted;
 
-    // Load background image
-    const loader = new THREE.TextureLoader();
-    loader.load('https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', function(texture) {
-      // Calculate aspect ratio and scale the plane to fit the viewport
-      const imageAspect = texture.image.width / texture.image.height;
-      const viewportAspect = window.innerWidth / window.innerHeight;
-      let bgWidth, bgHeight;
-      if (imageAspect > viewportAspect) {
-        // Image is wider than viewport: fit to width
-        bgWidth = 2 * viewportAspect;
-        bgHeight = 2;
-      } else {
-        // Image is taller than viewport: fit to height
-        bgWidth = 2 * imageAspect;
-        bgHeight = 2 * imageAspect / viewportAspect;
+function preload() {
+  bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+}
+
+function setup() {
+  pixelDensity(1.5);
+  createCanvas(windowWidth, windowHeight);
+  buttonX = width / 2;
+  buttonY = height / 2;
+  distortionSize = min(width, height) * 0.4;
+  blurBuffer = createGraphics(width, height);
+  distorted = createImage(floor(distortionSize), floor(distortionSize));
+
+  blurBuffer.image(bgImg, 0, 0, width, height);
+  blurBuffer.filter(BLUR, 2.5);
+
+  if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+    DeviceOrientationEvent.requestPermission().then(response => {
+      if (response === 'granted') {
+        window.addEventListener('deviceorientation', handleGyro);
       }
-      const bgPlane = new THREE.Mesh(
-        new THREE.PlaneGeometry(bgWidth, bgHeight),
-        new THREE.MeshBasicMaterial({ map: texture })
-      );
-      bgPlane.position.z = -1; // Behind everything
-      scene.add(bgPlane);
     });
+  } else {
+    window.addEventListener('deviceorientation', handleGyro);
+  }
+}
 
-    // Create glass plane with distortion
-    const glassGeometry = new THREE.PlaneGeometry(1.5, 1.5);
-    const glassMaterial = new THREE.ShaderMaterial({
-      uniforms: {
-        uTime: { value: 0 },
-        uMouse: { value: new THREE.Vector2(0, 0) }
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        varying vec2 vUv;
-        uniform float uTime;
-        uniform vec2 uMouse;
+function handleGyro(e) {
+  gyroAngle = radians(e.gamma || 0);
+}
 
-        void main() {
-          vec2 uv = vUv;
-          vec2 center = vec2(0.5, 0.5);
-          float dist = distance(uv, center);
-          if (dist > 0.5) discard;
+function draw() {
+  image(bgImg, 0, 0, width, height);
+  drawGlass(buttonX, buttonY);
+}
 
-          // Simple distortion
-          uv += (center - uv) * 0.1 * sin(dist * 10.0 + uTime);
+function drawGlass(x, y) {
+  let r = distortionSize / 2;
+  let d = floor(distortionSize);
+  let buffer = blurBuffer.get(x - r, y - r, d, d);
 
-          // Highlight (follows mouse)
-          vec2 mouseNorm = uMouse / vec2(${window.innerWidth}, ${window.innerHeight});
-          float highlight = smoothstep(0.4, 0.5, 1.0 - dot(normalize(uv - center), normalize(mouseNorm - center)));
-          vec3 highlightColor = vec3(0.8, 0.9, 1.0) * highlight * 0.6;
-          vec3 color = mix(vec3(0.2, 0.4, 0.8), highlightColor, highlight * 0.6);
+  buffer.loadPixels();
+  distorted.loadPixels();
 
-          // Blur edge
-          float blur = smoothstep(0.4, 0.5, dist);
-          float alpha = 0.8 * (1.0 - blur);
+  for (let py = 0; py < d; py += 1) {
+    for (let px = 0; px < d; px += 1) {
+      let dx = px - r;
+      let dy = py - r;
+      let distSqr = dx * dx + dy * dy;
+      let i = (px + py * d) * 4;
+      if (distSqr <= r * r) {
+        let norm = sqrt(distSqr) / r;
+        let k = 0.2;
+        let factor = 1 + k * norm * norm;
+        let sx = constrain(r + dx / factor, 0, d - 1);
+        let sy = constrain(r + dy / factor, 0, d - 1);
+        let si = (int(sx) + int(sy) * d) * 4;
 
-          gl_FragColor = vec4(color, alpha);
-        }
-      `,
-      transparent: true
-    });
-    const glassPlane = new THREE.Mesh(glassGeometry, glassMaterial);
-    scene.add(glassPlane);
-
-    // Mouse/touch interaction
-    const mouse = new THREE.Vector2();
-    window.addEventListener('mousemove', (e) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-      glassMaterial.uniforms.uMouse.value.set(mouse.x, mouse.y);
-    });
-    window.addEventListener('touchmove', (e) => {
-      mouse.x = e.touches[0].clientX;
-      mouse.y = e.touches[0].clientY;
-      glassMaterial.uniforms.uMouse.value.set(mouse.x, mouse.y);
-    });
-
-    // Animation loop
-    function animate() {
-      requestAnimationFrame(animate);
-      glassMaterial.uniforms.uTime.value += 0.01;
-      renderer.render(scene, camera);
+        distorted.pixels[i] = buffer.pixels[si];
+        distorted.pixels[i + 1] = buffer.pixels[si + 1];
+        distorted.pixels[i + 2] = buffer.pixels[si + 2];
+        distorted.pixels[i + 3] = 220;
+      } else {
+        distorted.pixels[i + 3] = 0;
+      }
     }
-    animate();
+  }
+  distorted.updatePixels();
 
-    // Handle resize
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      // You can re-add the background here if you want, but it's optional for this demo
-    });
-  </script>
+  drawingContext.save();
+  drawingContext.beginPath();
+  drawingContext.arc(x, y, r, 0, TWO_PI);
+  drawingContext.clip();
+  image(distorted, x - r, y - r);
+  drawingContext.restore();
+
+  drawCircleEdge(x, y, r);
+  stroke(255, 255, 255, 50);
+  strokeWeight(0.6);
+  noFill();
+  circle(x, y, d);
+}
+
+function drawCircleEdge(cx, cy, radius) {
+  let ctx = drawingContext;
+  let mouseAngle = atan2(mouseY - cy, mouseX - cx);
+
+  let gx1 = cx + cos(mouseAngle) * 120;
+  let gy1 = cy + sin(mouseAngle) * 120;
+  let gx2 = cx + cos(mouseAngle + PI) * 120;
+  let gy2 = cy + sin(mouseAngle + PI) * 120;
+
+  let gradient = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
+  gradient.addColorStop(0, 'rgba(255, 150, 255, 0)');
+  gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
+  gradient.addColorStop(1, 'rgba(150, 255, 255, 0)');
+
+  ctx.strokeStyle = gradient;
+  ctx.lineWidth = 2;
+  ctx.filter = 'blur(1px)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, TWO_PI);
+  ctx.stroke();
+  ctx.filter = 'none';
+}
+
+function mousePressed() {
+  if (dist(mouseX, mouseY, buttonX, buttonY) < distortionSize / 2) {
+    isDragging = true;
+    offsetX = mouseX - buttonX;
+    offsetY = mouseY - buttonY;
+  }
+}
+
+function mouseDragged() {
+  if (isDragging) {
+    buttonX = constrain(mouseX - offsetX, 60, width - 60);
+    buttonY = constrain(mouseY - offsetY, 60, height - 60);
+  }
+}
+
+function mouseReleased() {
+  isDragging = false;
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  distortionSize = min(width, height) * 0.4;
+  blurBuffer = createGraphics(width, height);
+  blurBuffer.image(bgImg, 0, 0, width, height);
+  blurBuffer.filter(BLUR, 2.5);
+  distorted = createImage(floor(distortionSize), floor(distortionSize));
+}
+</script>
 </body>
 </html>
