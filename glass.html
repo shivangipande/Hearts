@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Apple Liquid Himbo Orb</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Imitation Liquid Glass</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background: black;
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      height: 100%;
     }
     canvas {
       display: block;
@@ -22,86 +22,131 @@
 let buttonX, buttonY;
 let isDragging = false;
 let offsetX = 0, offsetY = 0;
-let bgImg, distortionSize;
-let blurBuffer, distorted;
-let bgLoaded = false;
-let poeticLine = "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical — a tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.";
-let maxTextWidth;
+let bgImg;
+let distortionSize;
+let blurBuffer;
+let distorted;
+let bgReady = false;
+const title = "Imitation Liquid Glass";
+const body = "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical. A tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.";
 
 function preload() {
-  bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=1200&auto=format&fit=crop");
+  bgImg = loadImage(
+    "https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=1200&auto=format&fit=crop",
+    () => { bgReady = true; }
+  );
 }
 
 function setup() {
   pixelDensity(1.5);
   createCanvas(windowWidth, windowHeight);
-  textFont("-apple-system");
-  textAlign(LEFT, TOP);
-  setResponsiveText();
-
   buttonX = width / 2;
   buttonY = height / 2;
   distortionSize = min(width, height) * 0.4;
-
   blurBuffer = createGraphics(width, height);
-  blurBuffer.textFont("-apple-system");
-  blurBuffer.textAlign(LEFT, TOP);
-  setResponsiveText(blurBuffer);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
+  updateBlurBuffer();
+}
 
-  bgImg.loadPixels();
-  bgLoaded = true;
-  drawBlurBuffer();
+function updateBlurBuffer() {
+  if (!bgReady) return;
+  blurBuffer.clear();
+  blurBuffer.image(bgImg, 0, 0, width, height);
+
+  // Draw centered title and body into the blur buffer (using a centered box)
+  drawTextCenteredBox(blurBuffer, title, body, width/2, height/2, width * 0.5, height * 0.5);
+  blurBuffer.filter(BLUR, 2.5);
+}
+
+function drawTextCenteredBox(gfx, title, body, centerX, centerY, boxWidth, boxHeight) {
+  gfx.push();
+  gfx.textAlign(CENTER, CENTER);
+  gfx.textFont('Helvetica Neue');
+  gfx.fill(255);
+
+  // Calculate base font size based on box height (empirical, adjust as needed)
+  let baseSize = boxHeight * 0.04;
+  let titleSize = baseSize * 4;
+  let bodySize = baseSize;
+
+  // Set line height for title and body
+  let titleLineHeight = titleSize * 1.2;
+  let bodyLineHeight = bodySize * 1.2;
+
+  // Split body into lines that fit the box width
+  let bodyLines = splitIntoLines(gfx, body, bodySize, boxWidth);
+
+  // Calculate total height for vertical centering
+  // Title takes one line, gap is 30% of titleLineHeight, body takes bodyLines.length lines
+  let totalHeight = titleLineHeight + (titleLineHeight * 0.3) + (bodyLines.length * bodyLineHeight);
+  let startY = centerY - (totalHeight / 2);
+
+  // Draw title (faux bold by drawing twice with offset)
+  gfx.textSize(titleSize);
+  gfx.textLeading(titleLineHeight);
+  gfx.text(title, centerX + 1, startY + titleLineHeight/2);
+  gfx.text(title, centerX, startY + titleLineHeight/2);
+
+  // Draw body lines (start after title + 30% of titleLineHeight as gap)
+  gfx.textSize(bodySize);
+  gfx.textLeading(bodyLineHeight);
+  let bodyStartY = startY + titleLineHeight + (titleLineHeight * 0.3);
+  for (let i = 0; i < bodyLines.length; i++) {
+    gfx.text(bodyLines[i], centerX, bodyStartY + (i * bodyLineHeight));
+  }
+  gfx.pop();
+}
+
+function splitIntoLines(gfx, txt, fontSize, maxWidth) {
+  gfx.textSize(fontSize);
+  let words = txt.split(' ');
+  let lines = [''];
+  let currentLine = 0;
+
+  for (let i = 0; i < words.length; i++) {
+    let testLine = lines[currentLine] + words[i] + ' ';
+    if (gfx.textWidth(testLine) < maxWidth) {
+      lines[currentLine] = testLine;
+    } else {
+      currentLine++;
+      lines[currentLine] = words[i] + ' ';
+    }
+  }
+  return lines.map(line => line.trim());
 }
 
 function draw() {
-  if (!bgLoaded) return;
+  if (!bgReady) {
+    background(30);
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(24);
+    textFont('Helvetica Neue');
+    text("Loading background...", width/2, height/2);
+    return;
+  }
 
-  // Step 1: draw sharp background
+  // Draw background image
   image(bgImg, 0, 0, width, height);
 
-  // Step 2: draw orb distortion from blurred text + bg
+  // Draw crisp, centered title and body in a centered box (50% width/height)
+  drawTextCenteredBox(this, title, body, width/2, height/2, width * 0.5, height * 0.5);
+
+  // Draw glass button (samples from blurred buffer, which includes blurred text)
   drawGlass(buttonX, buttonY);
-
-  // Step 3: draw sharp clean text above
-  drawCleanText();
-}
-
-function drawCleanText() {
-  fill(255, 235);
-  noStroke();
-  let textBlockHeight = getTextBlockHeight(poeticLine, maxTextWidth);
-  let x = (width - maxTextWidth) / 2;
-  let y = (height - textBlockHeight) / 2;
-  text(poeticLine, x, y, maxTextWidth);
-}
-
-function drawBlurBuffer() {
-  blurBuffer.clear();
-  blurBuffer.image(bgImg, 0, 0, width, height); // draw bg
-
-  // draw text into buffer (will be blurred)
-  blurBuffer.fill(255, 235);
-  blurBuffer.noStroke();
-  let textBlockHeight = getTextBlockHeight(poeticLine, maxTextWidth);
-  let x = (width - maxTextWidth) / 2;
-  let y = (height - textBlockHeight) / 2;
-  blurBuffer.text(poeticLine, x, y, maxTextWidth);
-
-  blurBuffer.filter(BLUR, 2.5); // blur everything (text + bg)
 }
 
 function drawGlass(x, y) {
   let r = distortionSize / 2;
   let d = floor(distortionSize);
-  if (d <= 0) return;
-
+  if (!bgReady) return;
   let buffer = blurBuffer.get(x - r, y - r, d, d);
+
   buffer.loadPixels();
   distorted.loadPixels();
 
-  for (let py = 0; py < d; py++) {
-    for (let px = 0; px < d; px++) {
+  for (let py = 0; py < d; py += 1) {
+    for (let px = 0; px < d; px += 1) {
       let dx = px - r;
       let dy = py - r;
       let distSqr = dx * dx + dy * dy;
@@ -117,7 +162,7 @@ function drawGlass(x, y) {
         distorted.pixels[i] = buffer.pixels[si];
         distorted.pixels[i + 1] = buffer.pixels[si + 1];
         distorted.pixels[i + 2] = buffer.pixels[si + 2];
-        distorted.pixels[i + 3] = 230;
+        distorted.pixels[i + 3] = 220;
       } else {
         distorted.pixels[i + 3] = 0;
       }
@@ -133,11 +178,16 @@ function drawGlass(x, y) {
   drawingContext.restore();
 
   drawCircleEdge(x, y, r);
+  stroke(255, 255, 255, 50);
+  strokeWeight(0.6);
+  noFill();
+  circle(x, y, d);
 }
 
 function drawCircleEdge(cx, cy, radius) {
   let ctx = drawingContext;
-  let mouseAngle = atan2(mouseY - cx, mouseX - cx);
+  let mouseAngle = atan2(mouseY - cy, mouseX - cx);
+
   let gx1 = cx + cos(mouseAngle) * 120;
   let gy1 = cy + sin(mouseAngle) * 120;
   let gx2 = cx + cos(mouseAngle + PI) * 120;
@@ -155,22 +205,6 @@ function drawCircleEdge(cx, cy, radius) {
   ctx.arc(cx, cy, radius, 0, TWO_PI);
   ctx.stroke();
   ctx.filter = 'none';
-}
-
-function getTextBlockHeight(txt, w) {
-  let words = txt.split(' ');
-  let line = '';
-  let lines = 1;
-  for (let i = 0; i < words.length; i++) {
-    let testLine = line + words[i] + ' ';
-    if (textWidth(testLine) > w) {
-      lines++;
-      line = words[i] + ' ';
-    } else {
-      line = testLine;
-    }
-  }
-  return lines * textLeading();
 }
 
 function mousePressed() {
@@ -194,28 +228,10 @@ function mouseReleased() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  setResponsiveText();
   distortionSize = min(width, height) * 0.4;
-
   blurBuffer = createGraphics(width, height);
-  blurBuffer.textFont("-apple-system");
-  blurBuffer.textAlign(LEFT, TOP);
-  setResponsiveText(blurBuffer);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
-  if (bgLoaded) drawBlurBuffer();
-}
-
-function setResponsiveText(target) {
-  let base = min(windowWidth, windowHeight);
-  let fontSize = constrain(base * 0.045, 16, 80);
-  maxTextWidth = width * 0.85;
-  if (target) {
-    target.textSize(fontSize);
-    target.textLeading(fontSize * 1.2);
-  } else {
-    textSize(fontSize);
-    textLeading(fontSize * 1.2);
-  }
+  updateBlurBuffer();
 }
 </script>
 </body>
