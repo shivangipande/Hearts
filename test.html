@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Apple Liquid Glass Button (Optimized)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/addons/p5.sound.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <style>
     html, body {
       margin: 0;
@@ -28,11 +26,13 @@ let gyroAngle = 0;
 let distortionSize;
 let blurBuffer;
 let distorted;
-let myFont;
+let bgReady = false;
 
 function preload() {
-  bgImg = loadImage("https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=3540&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
-  myFont = loadFont('https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7W0Q5nw.woff2');
+  bgImg = loadImage(
+    "https://images.unsplash.com/photo-1687042277586-971369d3d241?q=80&w=1200&auto=format&fit=crop"
+    , () => { bgReady = true; }
+  );
 }
 
 function setup() {
@@ -43,9 +43,10 @@ function setup() {
   distortionSize = min(width, height) * 0.4;
   blurBuffer = createGraphics(width, height);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
-
-  blurBuffer.image(bgImg, 0, 0, width, height);
-  blurBuffer.filter(BLUR, 2.5);
+  if (bgReady) {
+    blurBuffer.image(bgImg, 0, 0, width, height);
+    blurBuffer.filter(BLUR, 2.5);
+  }
 
   if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
     DeviceOrientationEvent.requestPermission().then(response => {
@@ -63,18 +64,28 @@ function handleGyro(e) {
 }
 
 function draw() {
+  if (!bgReady) {
+    background(30);
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(24);
+    text("Loading background...", width/2, height/2);
+    return;
+  }
+
   image(bgImg, 0, 0, width, height);
 
   // Draw Apple-style center-aligned text as part of background
   push();
   textAlign(CENTER, CENTER);
   textSize(80);
-  textFont(myFont);
+  textFont('system-ui'); // Uses SF Pro on Apple devices, fallback elsewhere
   fill(255);
-  text(
-    "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical. A tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.",
-    width/2, height/2
-  );
+  // Use textWidth to wrap lines if needed
+  let txt = "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical. A tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.";
+  let margin = 80;
+  let boxWidth = width - margin * 2;
+  text(txt, width/2, height/2, boxWidth, height);
   pop();
 
   drawGlass(buttonX, buttonY);
@@ -83,6 +94,7 @@ function draw() {
 function drawGlass(x, y) {
   let r = distortionSize / 2;
   let d = floor(distortionSize);
+  if (!bgReady) return;
   let buffer = blurBuffer.get(x - r, y - r, d, d);
 
   buffer.loadPixels();
@@ -173,9 +185,11 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   distortionSize = min(width, height) * 0.4;
   blurBuffer = createGraphics(width, height);
-  blurBuffer.image(bgImg, 0, 0, width, height);
-  blurBuffer.filter(BLUR, 2.5);
   distorted = createImage(floor(distortionSize), floor(distortionSize));
+  if (bgReady) {
+    blurBuffer.image(bgImg, 0, 0, width, height);
+    blurBuffer.filter(BLUR, 2.5);
+  }
 }
 </script>
 </body>
