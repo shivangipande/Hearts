@@ -112,10 +112,12 @@ function drawGlass(x, y) {
 
 function drawCircleEdge(cx, cy, radius) {
   let ctx = drawingContext;
-  let gx1 = cx + cos(gyroAngle) * 120;
-  let gy1 = cy + sin(gyroAngle) * 120;
-  let gx2 = cx + cos(gyroAngle + PI) * 120;
-  let gy2 = cy + sin(gyroAngle + PI) * 120;
+  let mouseAngle = atan2(mouseY - cy, mouseX - cx);
+
+  let gx1 = cx + cos(mouseAngle) * 120;
+  let gy1 = cy + sin(mouseAngle) * 120;
+  let gx2 = cx + cos(mouseAngle + PI) * 120;
+  let gy2 = cy + sin(mouseAngle + PI) * 120;
 
   let gradient = ctx.createLinearGradient(gx1, gy1, gx2, gy2);
   gradient.addColorStop(0, 'rgba(255, 150, 255, 0)');
