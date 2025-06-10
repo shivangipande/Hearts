@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Glass Effect with True Centered Text</title>
+  <title>Imitation Liquid Glass</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -27,7 +27,8 @@ let distortionSize;
 let blurBuffer;
 let distorted;
 let bgReady = false;
-const mainText = "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical. A tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.";
+const title = "Imitation Liquid Glass";
+const body = "Drag around to experience this imitation of Apple's liquid glass — iconic, misunderstood, too pretty to be practical. A tactile himbo of the interface world, beloved not for what it does, but how it dares to shimmer.";
 
 function preload() {
   bgImg = loadImage(
@@ -52,18 +53,45 @@ function updateBlurBuffer() {
   blurBuffer.clear();
   blurBuffer.image(bgImg, 0, 0, width, height);
 
-  // Draw true centered text into the blur buffer
-  drawCenteredText(blurBuffer, mainText, width/2, height/2, min(width, height) * 0.05, width * 0.8);
+  // Draw centered title and body into the blur buffer (so it gets blurred under glass)
+  drawTextCentered(blurBuffer, title, body, width/2, height/2, min(width, height) * 0.05, width * 0.8);
   blurBuffer.filter(BLUR, 2.5);
 }
 
-function drawCenteredText(gfx, txt, x, y, fontSize, maxWidth) {
+function drawTextCentered(gfx, title, body, x, y, baseSize, maxWidth) {
   gfx.push();
   gfx.textAlign(CENTER, CENTER);
-  gfx.textSize(fontSize);
-  gfx.textFont('system-ui');
+  gfx.textFont('Helvetica Neue');
   gfx.fill(255);
 
+  // Calculate title and body font sizes
+  let titleSize = baseSize * 4;
+  let bodySize = baseSize;
+
+  // Split body into lines
+  let bodyLines = splitIntoLines(gfx, body, bodySize, maxWidth);
+
+  // Calculate total height for vertical centering
+  let lineHeight = bodySize * 1.2;
+  let titleHeight = lineHeight * 1.5; // Extra space for title
+  let totalHeight = titleHeight + (bodyLines.length * lineHeight);
+  let startY = y - (totalHeight / 2);
+
+  // Draw title (faux bold by drawing twice with offset)
+  gfx.textSize(titleSize);
+  gfx.text(title, x + 1, startY + titleHeight/2);
+  gfx.text(title, x, startY + titleHeight/2);
+
+  // Draw body lines
+  gfx.textSize(bodySize);
+  for (let i = 0; i < bodyLines.length; i++) {
+    gfx.text(bodyLines[i], x, startY + titleHeight + (i * lineHeight));
+  }
+  gfx.pop();
+}
+
+function splitIntoLines(gfx, txt, fontSize, maxWidth) {
+  gfx.textSize(fontSize);
   let words = txt.split(' ');
   let lines = [''];
   let currentLine = 0;
@@ -77,15 +105,7 @@ function drawCenteredText(gfx, txt, x, y, fontSize, maxWidth) {
       lines[currentLine] = words[i] + ' ';
     }
   }
-
-  let lineHeight = fontSize * 1.2;
-  let totalHeight = lines.length * lineHeight;
-  let startY = y - (totalHeight / 2) + (lineHeight / 2);
-
-  for (let i = 0; i < lines.length; i++) {
-    gfx.text(lines[i].trim(), x, startY + i * lineHeight);
-  }
-  gfx.pop();
+  return lines.map(line => line.trim());
 }
 
 function draw() {
@@ -94,6 +114,7 @@ function draw() {
     fill(255);
     textAlign(CENTER, CENTER);
     textSize(24);
+    textFont('Helvetica Neue');
     text("Loading background...", width/2, height/2);
     return;
   }
@@ -101,8 +122,8 @@ function draw() {
   // Draw background image
   image(bgImg, 0, 0, width, height);
 
-  // Draw true centered text on main canvas
-  drawCenteredText(this, mainText, width/2, height/2, min(width, height) * 0.05, width * 0.8);
+  // Draw crisp, centered title and body on main canvas
+  drawTextCentered(this, title, body, width/2, height/2, min(width, height) * 0.05, width * 0.8);
 
   // Draw glass button (samples from blurred buffer, which includes blurred text)
   drawGlass(buttonX, buttonY);
