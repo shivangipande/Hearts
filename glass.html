@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apple Liquid Glass Button (Optimized)</title>
+  <title>Apple Liquid Glass Button (Fixed)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   <style>
     html, body {
@@ -49,7 +49,7 @@ function setup() {
 }
 
 function handleGyro(e) {
-  gyroAngle = radians(e.gamma || 0); // horizontal tilt for edge glow
+  gyroAngle = radians(e.gamma || 0);
 }
 
 function draw() {
@@ -60,22 +60,21 @@ function draw() {
 
 function drawGlass(x, y) {
   let radius = distortionSize / 2;
-  let d = distortionSize;
-  let buffer = createGraphics(d, d);
-
-  buffer.image(bgImg, -x + d / 2, -y + d / 2, width, height);
+  let d = floor(distortionSize);
+  let buffer = createImage(d, d);
+  buffer.copy(bgImg, x - radius, y - radius, d, d, 0, 0, d, d);
   buffer.filter(BLUR, 3);
   buffer.loadPixels();
-  loadPixels();
 
-  for (let px = 0; px < d; px += 2) {
-    for (let py = 0; py < d; py += 2) {
+  loadPixels();
+  for (let px = 0; px < d; px++) {
+    for (let py = 0; py < d; py++) {
       let dx = px - radius;
       let dy = py - radius;
       let distFromCenter = sqrt(dx * dx + dy * dy);
       if (distFromCenter < radius) {
         let norm = distFromCenter / radius;
-        let k = 0.2;
+        let k = 0.25;
         let factor = 1 + k * norm * norm;
         let sx = radius + dx / factor;
         let sy = radius + dy / factor;
@@ -85,12 +84,20 @@ function drawGlass(x, y) {
         let g = buffer.pixels[i + 1];
         let b = buffer.pixels[i + 2];
 
-        noStroke();
-        fill(r, g, b, 180);
-        rect(x - radius + px, y - radius + py, 2, 2);
+        let canvasX = floor(x - radius + px);
+        let canvasY = floor(y - radius + py);
+
+        if (canvasX >= 0 && canvasX < width && canvasY >= 0 && canvasY < height) {
+          let idx = (canvasX + canvasY * width) * 4;
+          pixels[idx] = r;
+          pixels[idx + 1] = g;
+          pixels[idx + 2] = b;
+          pixels[idx + 3] = 180;
+        }
       }
     }
   }
+  updatePixels();
 
   drawCircleEdge(x, y, radius);
 
